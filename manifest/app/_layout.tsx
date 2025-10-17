@@ -1,38 +1,42 @@
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import "react-native-reanimated";
-import "../global.css";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Provider } from "react-redux";
-import { store } from "@/state/store";
-import { ClerkProvider } from "@clerk/clerk-expo";
-import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import { useEffect } from 'react';
+import { Stack } from 'expo-router';
+import { Provider } from 'react-redux';
+import { store } from '../store/store';
+import { loadPersistedShipments } from '../store/shipmentSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function RootLayout() {
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
+function AppContent() {
+  useEffect(() => {
+    // Load persisted shipments on app start
+    const loadData = async () => {
+      try {
+        const shipmentsData = await AsyncStorage.getItem('shipments');
+        if (shipmentsData) {
+          const shipments = JSON.parse(shipmentsData);
+          store.dispatch(loadPersistedShipments(shipments));
+        }
+      } catch (error) {
+        console.error('Failed to load persisted data:', error);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView>
-        <ClerkProvider tokenCache={tokenCache}>
-          <Provider store={store}>
-            <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(protected)" />
-            </Stack>
-          </Provider>
-        </ClerkProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <Stack>
+      <Stack.Screen name="index" options={{ title: 'Shipment Receiving' }} />
+      <Stack.Screen name="history" options={{ title: 'Shipment History' }} />
+      <Stack.Screen name="new-shipment" options={{ title: 'New Shipment' }} />
+      <Stack.Screen name="scan-items" options={{ title: 'Scan Items' }} />
+      <Stack.Screen name="received-items" options={{ title: 'Received Items' }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   );
 }
