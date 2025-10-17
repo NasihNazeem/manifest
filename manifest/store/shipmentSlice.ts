@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 import { Shipment, ShipmentState, ExpectedItem, ReceivedItem } from '../types/shipment';
 
 const initialState: ShipmentState = {
@@ -29,8 +29,6 @@ const shipmentSlice = createSlice({
       const { upc, qtyReceived } = action.payload;
       const expectedItem = state.currentShipment.expectedItems.find(item => item.upc === upc);
 
-      if (!expectedItem) return;
-
       // Check if item already received
       const existingIndex = state.currentShipment.receivedItems.findIndex(item => item.upc === upc);
 
@@ -41,15 +39,27 @@ const shipmentSlice = createSlice({
         existingItem.discrepancy = existingItem.qtyReceived - existingItem.qtyExpected;
       } else {
         // Add new received item
-        const receivedItem: ReceivedItem = {
-          itemNumber: expectedItem.itemNumber,
-          legacyItemNumber: expectedItem.legacyItemNumber,
-          description: expectedItem.description,
-          upc: expectedItem.upc,
-          qtyReceived,
-          qtyExpected: expectedItem.qtyExpected,
-          discrepancy: qtyReceived - expectedItem.qtyExpected,
-        };
+        const receivedItem: ReceivedItem = expectedItem
+          ? {
+              // Item was expected
+              itemNumber: expectedItem.itemNumber,
+              legacyItemNumber: expectedItem.legacyItemNumber,
+              description: expectedItem.description,
+              upc: expectedItem.upc,
+              qtyReceived,
+              qtyExpected: expectedItem.qtyExpected,
+              discrepancy: qtyReceived - expectedItem.qtyExpected,
+            }
+          : {
+              // Unexpected item (not in manifest) - overage
+              itemNumber: '',
+              legacyItemNumber: undefined,
+              description: 'Unexpected Item',
+              upc: upc,
+              qtyReceived,
+              qtyExpected: 0,
+              discrepancy: qtyReceived, // All unexpected items are overages
+            };
         state.currentShipment.receivedItems.push(receivedItem);
       }
     },
@@ -106,5 +116,54 @@ export const {
   loadShipment,
   deleteShipment,
 } = shipmentSlice.actions;
+
+/**
+ * Memoized selector to get all items with their received status
+ * Merges expectedItems and receivedItems to show complete picture:
+ * - Items expected but not received (shortage with qty 0)
+ * - Items expected and received (match or discrepancy)
+ * - Items received but not expected (unexpected overage)
+ */
+const selectCurrentShipment = (state: { shipment: ShipmentState }) => state.shipment.currentShipment;
+
+export const selectAllItemsWithStatus = createSelector(
+  [selectCurrentShipment],
+  (currentShipment): ReceivedItem[] => {
+    if (!currentShipment) return [];
+
+    const allItems: ReceivedItem[] = [];
+
+    // Add all expected items with their received status
+    currentShipment.expectedItems.forEach(expectedItem => {
+      const receivedItem = currentShipment.receivedItems.find(r => r.upc === expectedItem.upc);
+
+      if (receivedItem) {
+        // Item was received
+        allItems.push(receivedItem);
+      } else {
+        // Item was NOT received - shortage
+        allItems.push({
+          itemNumber: expectedItem.itemNumber,
+          legacyItemNumber: expectedItem.legacyItemNumber,
+          description: expectedItem.description,
+          upc: expectedItem.upc,
+          qtyReceived: 0,
+          qtyExpected: expectedItem.qtyExpected,
+          discrepancy: -expectedItem.qtyExpected, // Negative = shortage
+        });
+      }
+    });
+
+    // Add unexpected items (received but not in expected)
+    currentShipment.receivedItems.forEach(receivedItem => {
+      const isExpected = currentShipment.expectedItems.some(e => e.upc === receivedItem.upc);
+      if (!isExpected) {
+        allItems.push(receivedItem);
+      }
+    });
+
+    return allItems;
+  }
+);
 
 export default shipmentSlice.reducer;

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppSelector, useAppDispatch } from '../store/store';
-import { completeShipment, cancelShipment, updateReceivedItemQuantity } from '../store/shipmentSlice';
+import { completeShipment, cancelShipment, updateReceivedItemQuantity, selectAllItemsWithStatus } from '../store/shipmentSlice';
 import {
   exportReceivedItems,
   exportDiscrepancies,
@@ -23,6 +23,7 @@ export default function ReceivedItemsScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const currentShipment = useAppSelector(state => state.shipment.currentShipment);
+  const allItems = useAppSelector(selectAllItemsWithStatus); // Use new selector
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
 
@@ -77,16 +78,16 @@ export default function ReceivedItemsScreen() {
 
     switch (type) {
       case 'all':
-        success = await exportReceivedItems(currentShipment.receivedItems, `received_${date}.csv`);
+        success = await exportReceivedItems(allItems, `received_${date}.csv`);
         break;
       case 'discrepancies':
-        success = await exportDiscrepancies(currentShipment.receivedItems, `discrepancies_${date}.csv`);
+        success = await exportDiscrepancies(allItems, `discrepancies_${date}.csv`);
         break;
       case 'overages':
-        success = await exportOverages(currentShipment.receivedItems, `overages_${date}.csv`);
+        success = await exportOverages(allItems, `overages_${date}.csv`);
         break;
       case 'shortages':
-        success = await exportShortages(currentShipment.receivedItems, `shortages_${date}.csv`);
+        success = await exportShortages(allItems, `shortages_${date}.csv`);
         break;
     }
 
@@ -124,10 +125,11 @@ export default function ReceivedItemsScreen() {
   };
 
   const stats = {
-    total: currentShipment.receivedItems.length,
-    discrepancies: currentShipment.receivedItems.filter(item => item.discrepancy !== 0).length,
-    overages: currentShipment.receivedItems.filter(item => item.discrepancy > 0).length,
-    shortages: currentShipment.receivedItems.filter(item => item.discrepancy < 0).length,
+    totalExpected: currentShipment.expectedItems.length,
+    totalReceived: allItems.filter(item => item.qtyReceived > 0).length,
+    discrepancies: allItems.filter(item => item.discrepancy !== 0).length,
+    overages: allItems.filter(item => item.discrepancy > 0).length,
+    shortages: allItems.filter(item => item.discrepancy < 0).length,
   };
 
   return (
@@ -135,8 +137,12 @@ export default function ReceivedItemsScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Items Received</Text>
+            <Text style={styles.statValue}>{stats.totalExpected}</Text>
+            <Text style={styles.statLabel}>Expected Items</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{stats.totalReceived}</Text>
+            <Text style={styles.statLabel}>Received Items</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={[styles.statValue, stats.discrepancies > 0 && styles.warningValue]}>
@@ -191,11 +197,11 @@ export default function ReceivedItemsScreen() {
         </View>
 
         <View style={styles.itemsSection}>
-          <Text style={styles.sectionTitle}>Received Items</Text>
-          {currentShipment.receivedItems.length === 0 ? (
-            <Text style={styles.emptyText}>No items received yet</Text>
+          <Text style={styles.sectionTitle}>All Items ({allItems.length})</Text>
+          {allItems.length === 0 ? (
+            <Text style={styles.emptyText}>No items in shipment</Text>
           ) : (
-            currentShipment.receivedItems.map((item, index) => (
+            allItems.map((item, index) => (
               <View key={index} style={styles.itemCard}>
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemDescription}>{item.description}</Text>

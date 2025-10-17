@@ -8,6 +8,8 @@ import {
   ScrollView,
   Alert,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Camera, CameraView, BarcodeScanningResult } from "expo-camera";
@@ -170,7 +172,9 @@ export default function ScanItemsScreen() {
       (item) =>
         item.upc.includes(searchQuery) ||
         item.itemNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.legacyItemNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.legacyItemNumber
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
 
@@ -179,10 +183,14 @@ export default function ScanItemsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
           <Text style={styles.title}>Scan or Search Items</Text>
@@ -430,7 +438,7 @@ export default function ScanItemsScreen() {
           )}
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
