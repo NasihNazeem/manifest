@@ -87,11 +87,12 @@ export default function ScanItemsScreen() {
       return;
     }
 
-    // Search for items containing the query
+    // Search for items containing the query (UPC, Item Number, Legacy Number, or Description)
     const item = currentShipment?.expectedItems.find(
       (item) =>
         item.upc.includes(query) ||
         item.itemNumber.toLowerCase().includes(query.toLowerCase()) ||
+        item.legacyItemNumber?.toLowerCase().includes(query.toLowerCase()) ||
         item.description.toLowerCase().includes(query.toLowerCase())
     );
 
@@ -169,6 +170,7 @@ export default function ScanItemsScreen() {
       (item) =>
         item.upc.includes(searchQuery) ||
         item.itemNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.legacyItemNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase())
     ) || [];
 
@@ -207,7 +209,7 @@ export default function ScanItemsScreen() {
           <Text style={styles.sectionLabel}>Or Search Manually</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by UPC, Item Number, or Description"
+            placeholder="Search by UPC, Item #, Legacy #, or Description"
             value={searchQuery}
             onChangeText={handleSearch}
             autoCapitalize="none"
