@@ -3,10 +3,6 @@ sample/
 
 # Ignore all markdown files EXCEPT deployment guides
 *.md
-!DEPLOYMENT_GUIDE.md
-!QUICK_DEPLOY.md
-!PRE_LAUNCH_CHECKLIST.md
-!README.md
 
 # Environment variables (IMPORTANT: Never commit these!)
 .env

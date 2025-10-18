@@ -28,8 +28,7 @@ export default function HomeScreen() {
   const fetchActiveShipments = async () => {
     setFetchingShipments(true);
     try {
-      const baseUrl = API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '');
-      const response = await fetch(`${baseUrl}/api/shipments`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

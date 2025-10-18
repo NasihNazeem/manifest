@@ -56,7 +56,7 @@ async function saveLastSyncTimestamp(shipmentId: string, timestamp: number): Pro
  */
 export async function syncShipmentToServer(shipmentId: string, shipmentData: any): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch(`${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments`, {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,7 +90,7 @@ export async function pushReceivedItem(
     const deviceId = await getDeviceId();
 
     const response = await fetch(
-      `${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments/${shipmentId}/received-items`,
+      `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}/received-items`,
       {
         method: 'POST',
         headers: {
@@ -128,7 +128,7 @@ export async function pullReceivedItems(shipmentId: string): Promise<{
     const lastSync = await getLastSyncTimestamp(shipmentId);
 
     const response = await fetch(
-      `${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments/${shipmentId}/received-items/sync?lastSync=${lastSync}`,
+      `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}/received-items/sync?lastSync=${lastSync}`,
       {
         method: 'GET',
         headers: {
@@ -165,7 +165,7 @@ export async function getAllReceivedItems(shipmentId: string): Promise<{
 }> {
   try {
     const response = await fetch(
-      `${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments/${shipmentId}/received-items`,
+      `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}/received-items`,
       {
         method: 'GET',
         headers: {
@@ -195,7 +195,7 @@ export async function completeShipmentOnServer(shipmentId: string): Promise<{
 }> {
   try {
     const response = await fetch(
-      `${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments/${shipmentId}/complete`,
+      `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}/complete`,
       {
         method: 'POST',
         headers: {
@@ -224,7 +224,7 @@ export async function deleteShipmentOnServer(shipmentId: string): Promise<{
 }> {
   try {
     const response = await fetch(
-      `${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments/${shipmentId}`,
+      `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}`,
       {
         method: 'DELETE',
         headers: {

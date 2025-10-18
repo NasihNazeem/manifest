@@ -2,15 +2,35 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
+const rateLimit = require("express-rate-limit");
 const db = require("./database");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Stricter rate limit for PDF parsing (resource intensive)
+const pdfLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 PDF uploads per 15 minutes
+  message: "Too many PDF uploads, please try again later.",
+});
+
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Apply general rate limiting to all API routes
+app.use("/api/", limiter);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -231,8 +251,8 @@ app.get("/", (req, res) => {
   });
 });
 
-// PDF parsing endpoint
-app.post("/api/parse-pdf", upload.single("file"), async (req, res) => {
+// PDF parsing endpoint (with stricter rate limiting)
+app.post("/api/parse-pdf", pdfLimiter, upload.single("file"), async (req, res) => {
   try {
     let pdfBuffer;
 

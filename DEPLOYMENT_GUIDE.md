@@ -108,16 +108,16 @@ Should return:
 
 Now update your mobile app to use the production backend:
 
-**File:** `manifest/config/api.ts`
+**File:** `manifest/.env`
 
-```typescript
-export const API_CONFIG = {
-  // Change this to your Render URL:
-  PDF_PARSER_URL: 'https://YOUR-APP-NAME.onrender.com/api/parse-pdf',
-};
+```bash
+# Change from localhost to your Render URL:
+EXPO_PUBLIC_API_URL=https://YOUR-APP-NAME.onrender.com
 ```
 
 **IMPORTANT:** Replace `YOUR-APP-NAME` with your actual Render service name!
+
+The app uses environment variables, so you just need to update the `.env` file. The API configuration in `config/api.ts` automatically reads from this environment variable.
 
 ---
 

@@ -15,10 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.manifest",
+      "bundleIdentifier": "com.nasihnazeem.manifest",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs camera access to scan barcodes for receiving items.",
-        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload purchase order PDFs."
+        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload purchase order PDFs.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,19 +27,19 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.manifest",
+      "package": "com.nasihnazeem.manifest",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-barcode-scanner",
       "expo-router",
       [
         "expo-camera",
@@ -46,6 +47,12 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3acc4a87-930b-4261-9db7-8d57767ff903"
+      }
+    }
   }
 }

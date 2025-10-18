@@ -1,28 +1,27 @@
-/**
- * API Configuration
- *
- * Choose your backend:
- * - Local: http://localhost:3000/api/parse-pdf
- * - Vercel: https://your-project.vercel.app/api/parse-pdf
- * - Custom: Your deployed backend URL
- */
+// Get environment variables
+// EXPO_PUBLIC_ prefix makes them available in the app
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const API_KEY = process.env.EXPO_PUBLIC_API_KEY || "";
 
 export const API_CONFIG = {
-  // ngrok tunnel - REPLACE with your actual ngrok URL after running `ngrok http 3000`
-  PDF_PARSER_URL:
-    "https://overcommunicative-onerously-willia.ngrok-free.dev/api/parse-pdf",
+  // PDF Parser endpoint - built from base URL
+  PDF_PARSER_URL: `${API_BASE_URL}/api/parse-pdf`,
 
-  // Or deployed backend on Render
-  // PDF_PARSER_URL: 'https://your-app-name.onrender.com/api/parse-pdf',
-
-  // Or leave empty to use demo data only
-  // PDF_PARSER_URL: '',
+  // Base URL for other endpoints
+  BASE_URL: API_BASE_URL,
 
   // Optional: Add API key if you enable authentication
-  API_KEY: "",
+  API_KEY: API_KEY,
 };
 
 // Check if PDF parsing is enabled
 export const isPdfParsingEnabled = () => {
   return API_CONFIG.PDF_PARSER_URL !== "";
 };
+
+// Log current configuration in development
+if (__DEV__) {
+  console.log("📡 API Configuration:");
+  console.log(`   Base URL: ${API_CONFIG.BASE_URL}`);
+  console.log(`   PDF Parser: ${API_CONFIG.PDF_PARSER_URL}`);
+}
