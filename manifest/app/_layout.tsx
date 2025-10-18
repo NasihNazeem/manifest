@@ -1,42 +1,44 @@
-import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { Provider } from 'react-redux';
-import { store } from '../store/store';
-import { loadPersistedShipments } from '../store/shipmentSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PersistGate } from 'redux-persist/integration/react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { store, persistor } from '../store/store';
 
-function AppContent() {
-  useEffect(() => {
-    // Load persisted shipments on app start
-    const loadData = async () => {
-      try {
-        const shipmentsData = await AsyncStorage.getItem('shipments');
-        if (shipmentsData) {
-          const shipments = JSON.parse(shipmentsData);
-          store.dispatch(loadPersistedShipments(shipments));
-        }
-      } catch (error) {
-        console.error('Failed to load persisted data:', error);
-      }
-    };
-    loadData();
-  }, []);
-
+function LoadingView() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: 'Shipment Receiving' }} />
-      <Stack.Screen name="history" options={{ title: 'Shipment History' }} />
-      <Stack.Screen name="new-shipment" options={{ title: 'New Shipment' }} />
-      <Stack.Screen name="scan-items" options={{ title: 'Scan Items' }} />
-      <Stack.Screen name="received-items" options={{ title: 'Received Items' }} />
-    </Stack>
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#007AFF" />
+      <Text style={styles.loadingText}>Loading...</Text>
+    </View>
   );
 }
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <AppContent />
+      <PersistGate loading={<LoadingView />} persistor={persistor}>
+        <Stack>
+          <Stack.Screen name="index" options={{ title: 'Shipment Receiving' }} />
+          <Stack.Screen name="history" options={{ title: 'Shipment History' }} />
+          <Stack.Screen name="new-shipment" options={{ title: 'New Shipment' }} />
+          <Stack.Screen name="scan-items" options={{ title: 'Scan Items' }} />
+          <Stack.Screen name="received-items" options={{ title: 'Received Items' }} />
+        </Stack>
+      </PersistGate>
     </Provider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+});

@@ -99,10 +99,6 @@ const shipmentSlice = createSlice({
     deleteShipment: (state, action: PayloadAction<string>) => {
       state.shipments = state.shipments.filter(s => s.id !== action.payload);
     },
-
-    loadPersistedShipments: (state, action: PayloadAction<Shipment[]>) => {
-      state.shipments = action.payload;
-    },
   },
 });
 
@@ -111,7 +107,6 @@ export const {
   addReceivedItem,
   updateReceivedItemQuantity,
   completeShipment,
-  loadPersistedShipments,
   cancelShipment,
   loadShipment,
   deleteShipment,
