@@ -19,6 +19,7 @@ import {
   createMockDocumentIds,
 } from "../utils/pdfParser";
 import { ExpectedItem } from "../types/shipment";
+import { syncShipmentToServer } from "../services/syncService";
 
 export default function NewShipmentScreen() {
   const router = useRouter();
@@ -123,7 +124,7 @@ export default function NewShipmentScreen() {
     setExpectedItems(expectedItems.filter((_, i) => i !== index));
   };
 
-  const handleStartShipment = () => {
+  const handleStartShipment = async () => {
     if (expectedItems.length === 0) {
       Alert.alert("Error", "Please add at least one expected item");
       return;
@@ -142,7 +143,25 @@ export default function NewShipmentScreen() {
       return;
     }
 
+    // Create shipment locally
+    const shipmentId = Date.now().toString();
+    const shipmentData = {
+      id: shipmentId,
+      date: new Date().toISOString().split('T')[0],
+      documentIds,
+      expectedItems,
+      status: 'in-progress' as const,
+      createdAt: Date.now(),
+    };
+
     dispatch(createShipment({ documentIds, expectedItems }));
+
+    // Sync to server in background (don't block user)
+    syncShipmentToServer(shipmentId, shipmentData).catch(error => {
+      console.error('Failed to sync shipment to server:', error);
+      // Shipment still works locally even if sync fails
+    });
+
     router.replace("/scan-items");
   };
 

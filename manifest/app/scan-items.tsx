@@ -10,12 +10,14 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Clipboard,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Camera, CameraView, BarcodeScanningResult } from "expo-camera";
 import { useAppSelector, useAppDispatch } from "../store/store";
 import { addReceivedItem } from "../store/shipmentSlice";
 import { ExpectedItem } from "../types/shipment";
+import { pushReceivedItem } from "../services/syncService";
 
 export default function ScanItemsScreen() {
   const router = useRouter();
@@ -46,10 +48,17 @@ export default function ScanItemsScreen() {
   }, [currentShipment]);
 
   const requestCameraPermission = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
+    const { status} = await Camera.requestCameraPermissionsAsync();
     setHasPermission(status === "granted");
     if (status === "granted") {
       setScannerActive(true);
+    }
+  };
+
+  const handleCopyShipmentId = () => {
+    if (currentShipment) {
+      Clipboard.setString(currentShipment.id);
+      Alert.alert('Copied!', `Shipment ID ${currentShipment.id} copied to clipboard`);
     }
   };
 
@@ -105,7 +114,7 @@ export default function ScanItemsScreen() {
     }
   };
 
-  const handleAddReceived = () => {
+  const handleAddReceived = async () => {
     if (!selectedItem) {
       Alert.alert("Error", "No item selected");
       return;
@@ -117,6 +126,7 @@ export default function ScanItemsScreen() {
       return;
     }
 
+    // Add to local state first
     dispatch(
       addReceivedItem({
         upc: selectedItem.upc,
@@ -124,13 +134,21 @@ export default function ScanItemsScreen() {
       })
     );
 
+    // Sync to server in background
+    if (currentShipment) {
+      pushReceivedItem(currentShipment.id, selectedItem.upc, qty).catch(error => {
+        console.error('Failed to sync to server:', error);
+        // Don't block the user, sync will happen later
+      });
+    }
+
     Alert.alert("Success", `Added ${qty} of ${selectedItem.description}`);
     setSearchQuery("");
     setSelectedItem(null);
     setQuantity("");
   };
 
-  const handleAddUnexpectedItem = () => {
+  const handleAddUnexpectedItem = async () => {
     // Validate required fields - UPC is mandatory as single source of truth
     if (!unexpectedItem.upc.trim()) {
       Alert.alert("Error", "Please enter a UPC");
@@ -143,16 +161,27 @@ export default function ScanItemsScreen() {
       return;
     }
 
+    const upc = unexpectedItem.upc.trim();
+
+    // Add to local state first
     dispatch(
       addReceivedItem({
-        upc: unexpectedItem.upc.trim(),
+        upc,
         qtyReceived: qty,
       })
     );
 
+    // Sync to server in background
+    if (currentShipment) {
+      pushReceivedItem(currentShipment.id, upc, qty).catch(error => {
+        console.error('Failed to sync to server:', error);
+        // Don't block the user, sync will happen later
+      });
+    }
+
     Alert.alert(
       "Success",
-      `Added unexpected item with UPC ${unexpectedItem.upc.trim()} (Qty: ${qty})`
+      `Added unexpected item with UPC ${upc} (Qty: ${qty})`
     );
 
     // Reset form
@@ -203,6 +232,15 @@ export default function ScanItemsScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Shipment ID Banner for sharing */}
+        <TouchableOpacity style={styles.shipmentIdBanner} onPress={handleCopyShipmentId}>
+          <View style={styles.shipmentIdContent}>
+            <Text style={styles.shipmentIdLabel}>Shipment ID (tap to copy):</Text>
+            <Text style={styles.shipmentIdValue}>{currentShipment.id}</Text>
+            <Text style={styles.shipmentIdHint}>Share this with other devices to join</Text>
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.scanSection}>
           <TouchableOpacity
@@ -474,6 +512,35 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+  },
+  shipmentIdBanner: {
+    backgroundColor: "#E3F2FD",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: "#2196F3",
+  },
+  shipmentIdContent: {
+    alignItems: "center",
+  },
+  shipmentIdLabel: {
+    fontSize: 12,
+    color: "#1976D2",
+    fontWeight: "600",
+    marginBottom: 5,
+  },
+  shipmentIdValue: {
+    fontSize: 18,
+    color: "#0D47A1",
+    fontWeight: "bold",
+    marginBottom: 5,
+    fontFamily: "monospace",
+  },
+  shipmentIdHint: {
+    fontSize: 11,
+    color: "#1976D2",
+    fontStyle: "italic",
   },
   scanSection: {
     marginBottom: 20,

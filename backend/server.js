@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
+const db = require("./database");
 require("dotenv").config();
 
 const app = express();
@@ -205,10 +206,17 @@ function extractPackingListNumbers(text) {
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
-    message: "PDF Parser API is running",
+    message: "PDF Parser & Sync API is running",
     endpoints: {
       health: "GET /",
       parsePdf: "POST /api/parse-pdf",
+      createShipment: "POST /api/shipments",
+      getShipment: "GET /api/shipments/:id",
+      getAllShipments: "GET /api/shipments",
+      addReceivedItem: "POST /api/shipments/:id/received-items",
+      getReceivedItems: "GET /api/shipments/:id/received-items",
+      syncReceivedItems: "GET /api/shipments/:id/received-items/sync",
+      completeShipment: "POST /api/shipments/:id/complete",
     },
   });
 });
@@ -262,6 +270,198 @@ app.post("/api/parse-pdf", upload.single("file"), async (req, res) => {
   }
 });
 
+// ============================================
+// SYNC ENDPOINTS FOR MULTI-DEVICE SUPPORT
+// ============================================
+
+// Create or update a shipment
+app.post("/api/shipments", (req, res) => {
+  try {
+    const { shipmentId, shipmentData } = req.body;
+
+    if (!shipmentId || !shipmentData) {
+      return res.status(400).json({
+        success: false,
+        error: "shipmentId and shipmentData are required"
+      });
+    }
+
+    const success = db.saveShipment(shipmentId, shipmentData);
+
+    if (success) {
+      res.json({
+        success: true,
+        shipment: db.getShipment(shipmentId)
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: "Failed to save shipment"
+      });
+    }
+  } catch (error) {
+    console.error("Error saving shipment:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get a specific shipment
+app.get("/api/shipments/:id", (req, res) => {
+  try {
+    const shipment = db.getShipment(req.params.id);
+
+    if (shipment) {
+      res.json({
+        success: true,
+        shipment
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: "Shipment not found"
+      });
+    }
+  } catch (error) {
+    console.error("Error getting shipment:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get all shipments
+app.get("/api/shipments", (req, res) => {
+  try {
+    const shipments = db.getAllShipments();
+    res.json({
+      success: true,
+      shipments
+    });
+  } catch (error) {
+    console.error("Error getting shipments:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Add a received item to a shipment
+app.post("/api/shipments/:id/received-items", (req, res) => {
+  try {
+    const shipmentId = req.params.id;
+    const { upc, qtyReceived, deviceId } = req.body;
+
+    if (!upc || !qtyReceived || !deviceId) {
+      return res.status(400).json({
+        success: false,
+        error: "upc, qtyReceived, and deviceId are required"
+      });
+    }
+
+    const result = db.addReceivedItem(shipmentId, upc, qtyReceived, deviceId);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        item: result.item
+      });
+    } else {
+      res.status(404).json(result);
+    }
+  } catch (error) {
+    console.error("Error adding received item:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get all received items for a shipment
+app.get("/api/shipments/:id/received-items", (req, res) => {
+  try {
+    const shipmentId = req.params.id;
+    const items = db.getReceivedItems(shipmentId);
+
+    res.json({
+      success: true,
+      items
+    });
+  } catch (error) {
+    console.error("Error getting received items:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Sync received items (get items updated after timestamp)
+app.get("/api/shipments/:id/received-items/sync", (req, res) => {
+  try {
+    const shipmentId = req.params.id;
+    const lastSync = parseInt(req.query.lastSync) || 0;
+
+    const items = db.getReceivedItemsSince(shipmentId, lastSync);
+
+    res.json({
+      success: true,
+      items,
+      serverTime: Date.now()
+    });
+  } catch (error) {
+    console.error("Error syncing items:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Complete a shipment
+app.post("/api/shipments/:id/complete", (req, res) => {
+  try {
+    const result = db.completeShipment(req.params.id);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        shipment: db.getShipment(req.params.id)
+      });
+    } else {
+      res.status(404).json(result);
+    }
+  } catch (error) {
+    console.error("Error completing shipment:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Delete a shipment
+app.delete("/api/shipments/:id", (req, res) => {
+  try {
+    const result = db.deleteShipment(req.params.id);
+
+    res.json({
+      success: result.success
+    });
+  } catch (error) {
+    console.error("Error deleting shipment:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -274,8 +474,16 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ PDF Parser API running on http://localhost:${PORT}`);
+  console.log(`✅ PDF Parser & Sync API running on http://localhost:${PORT}`);
   console.log(`📄 Endpoints:`);
-  console.log(`   GET  /           - Health check`);
-  console.log(`   POST /api/parse-pdf - Parse PDF file`);
+  console.log(`   GET    /                                      - Health check`);
+  console.log(`   POST   /api/parse-pdf                        - Parse PDF file`);
+  console.log(`   POST   /api/shipments                        - Create/update shipment`);
+  console.log(`   GET    /api/shipments/:id                    - Get shipment`);
+  console.log(`   GET    /api/shipments                        - Get all shipments`);
+  console.log(`   POST   /api/shipments/:id/received-items     - Add received item`);
+  console.log(`   GET    /api/shipments/:id/received-items     - Get all received items`);
+  console.log(`   GET    /api/shipments/:id/received-items/sync - Sync items since timestamp`);
+  console.log(`   POST   /api/shipments/:id/complete           - Complete shipment`);
+  console.log(`   DELETE /api/shipments/:id                    - Delete shipment`);
 });

@@ -1,11 +1,86 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppSelector } from '../store/store';
+import { useAppSelector, useAppDispatch } from '../store/store';
+import { createShipment } from '../store/shipmentSlice';
+import { API_CONFIG } from '../config/api';
+
+interface ActiveShipment {
+  id: string;
+  date: string;
+  documentIds: string[];
+  expectedItems: any[];
+  status: string;
+  createdAt: number;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const currentShipment = useAppSelector(state => state.shipment.currentShipment);
   const shipments = useAppSelector(state => state.shipment.shipments);
+  const [showJoinForm, setShowJoinForm] = useState(false);
+  const [activeShipments, setActiveShipments] = useState<ActiveShipment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchingShipments, setFetchingShipments] = useState(false);
+
+  // Fetch active shipments from server
+  const fetchActiveShipments = async () => {
+    setFetchingShipments(true);
+    try {
+      const baseUrl = API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '');
+      const response = await fetch(`${baseUrl}/api/shipments`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.shipments) {
+        // Filter for active (in-progress) shipments only
+        const active = result.shipments.filter(
+          (s: ActiveShipment) => s.status === 'in-progress'
+        );
+        setActiveShipments(active);
+      }
+    } catch (error) {
+      console.error('Error fetching active shipments:', error);
+      Alert.alert('Error', 'Failed to fetch active shipments. Make sure the backend is running.');
+    } finally {
+      setFetchingShipments(false);
+    }
+  };
+
+  // Join a specific shipment
+  const handleJoinShipment = async (shipment: ActiveShipment) => {
+    setLoading(true);
+
+    try {
+      // Create local shipment from server data
+      dispatch(createShipment({
+        documentIds: shipment.documentIds,
+        expectedItems: shipment.expectedItems,
+      }));
+
+      Alert.alert('Success', `Joined shipment from ${shipment.date}!`);
+      setShowJoinForm(false);
+      router.push('/scan-items');
+    } catch (error) {
+      console.error('Error joining shipment:', error);
+      Alert.alert('Error', 'Failed to join shipment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch active shipments when join form is opened
+  useEffect(() => {
+    if (showJoinForm) {
+      fetchActiveShipments();
+    }
+  }, [showJoinForm]);
 
   return (
     <View style={styles.container}>
@@ -38,12 +113,83 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton, styles.largeButton]}
-            onPress={() => router.push('/new-shipment')}
-          >
-            <Text style={styles.buttonText}>Start New Shipment</Text>
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity
+              style={[styles.button, styles.primaryButton, styles.largeButton]}
+              onPress={() => router.push('/new-shipment')}
+            >
+              <Text style={styles.buttonText}>Start New Shipment</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.joinButton, styles.largeButton]}
+              onPress={() => setShowJoinForm(!showJoinForm)}
+            >
+              <Text style={styles.joinButtonText}>
+                {showJoinForm ? 'Cancel' : 'Join Existing Shipment'}
+              </Text>
+            </TouchableOpacity>
+
+            {showJoinForm && (
+              <View style={styles.joinForm}>
+                <Text style={styles.joinFormTitle}>Active Shipments</Text>
+                <Text style={styles.joinFormHint}>
+                  Select a shipment to join and start receiving items
+                </Text>
+
+                {fetchingShipments ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#007AFF" />
+                    <Text style={styles.loadingText}>Loading active shipments...</Text>
+                  </View>
+                ) : activeShipments.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No active shipments found</Text>
+                    <Text style={styles.emptyHint}>
+                      Ask another device to upload a PDF and create a shipment
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.shipmentList}>
+                    {activeShipments.map((shipment) => (
+                      <TouchableOpacity
+                        key={shipment.id}
+                        style={styles.shipmentCard}
+                        onPress={() => handleJoinShipment(shipment)}
+                        disabled={loading}
+                      >
+                        <View style={styles.shipmentCardHeader}>
+                          <Text style={styles.shipmentDate}>{shipment.date}</Text>
+                          <View style={styles.statusBadge}>
+                            <Text style={styles.statusText}>Active</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.shipmentInfo}>
+                          Packing Lists: {shipment.documentIds.join(', ')}
+                        </Text>
+                        <Text style={styles.shipmentInfo}>
+                          Expected Items: {shipment.expectedItems.length}
+                        </Text>
+                        <Text style={styles.shipmentIdSmall}>
+                          ID: {shipment.id}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.button, styles.secondaryButton, { marginTop: 15 }]}
+                  onPress={fetchActiveShipments}
+                  disabled={fetchingShipments}
+                >
+                  <Text style={styles.buttonTextSecondary}>
+                    {fetchingShipments ? 'Refreshing...' : 'Refresh List'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
 
         <View style={styles.divider} />
@@ -163,5 +309,98 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     fontStyle: 'italic',
+  },
+  joinButton: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#34C759',
+  },
+  joinButtonText: {
+    color: '#34C759',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  joinForm: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  joinFormTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
+  },
+  joinFormHint: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+  },
+  loadingContainer: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyHint: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  shipmentList: {
+    marginBottom: 10,
+  },
+  shipmentCard: {
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  shipmentCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  shipmentDate: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  statusBadge: {
+    backgroundColor: '#34C759',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  shipmentIdSmall: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 5,
+    fontFamily: 'monospace',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });

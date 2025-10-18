@@ -14,6 +14,8 @@ export interface ReceivedItem {
   qtyReceived: number;
   qtyExpected: number;
   discrepancy: number;
+  scannedByDevice?: string; // Device ID that scanned this item
+  scannedAt?: number; // Timestamp when scanned
 }
 
 export interface Shipment {
