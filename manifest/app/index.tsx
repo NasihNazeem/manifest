@@ -103,7 +103,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Shipment Receiving</Text>
+        <Text style={styles.title}>Manifest</Text>
 
         {/* Debug Info - Shows API URL */}
         <View style={styles.debugContainer}>

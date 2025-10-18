@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Shipment Receiving",
+    "name": "Manifest",
     "slug": "manifest",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/manifest-logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "scheme": "manifest",

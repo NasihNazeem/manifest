@@ -18,8 +18,8 @@ export default function RootLayout() {
     <Provider store={store}>
       <PersistGate loading={<LoadingView />} persistor={persistor}>
         <Stack>
-          <Stack.Screen name="index" options={{ title: 'Shipment Receiving' }} />
-          <Stack.Screen name="history" options={{ title: 'Shipment History' }} />
+          <Stack.Screen name="index" options={{ title: 'Manifest' }} />
+          <Stack.Screen name="history" options={{ title: 'History' }} />
           <Stack.Screen name="new-shipment" options={{ title: 'New Shipment' }} />
           <Stack.Screen name="scan-items" options={{ title: 'Scan Items' }} />
           <Stack.Screen name="received-items" options={{ title: 'Received Items' }} />
