@@ -285,7 +285,7 @@ app.post("/api/parse-pdf", upload.single("file"), async (req, res) => {
 // ============================================
 
 // Create or update a shipment
-app.post("/api/shipments", (req, res) => {
+app.post("/api/shipments", async (req, res) => {
   try {
     const { shipmentId, shipmentData } = req.body;
 
@@ -296,12 +296,13 @@ app.post("/api/shipments", (req, res) => {
       });
     }
 
-    const success = db.saveShipment(shipmentId, shipmentData);
+    const success = await db.saveShipment(shipmentId, shipmentData);
 
     if (success) {
+      const shipment = await db.getShipment(shipmentId);
       res.json({
         success: true,
-        shipment: db.getShipment(shipmentId)
+        shipment
       });
     } else {
       res.status(500).json({
@@ -319,9 +320,9 @@ app.post("/api/shipments", (req, res) => {
 });
 
 // Get a specific shipment
-app.get("/api/shipments/:id", (req, res) => {
+app.get("/api/shipments/:id", async (req, res) => {
   try {
-    const shipment = db.getShipment(req.params.id);
+    const shipment = await db.getShipment(req.params.id);
 
     if (shipment) {
       res.json({
@@ -344,9 +345,9 @@ app.get("/api/shipments/:id", (req, res) => {
 });
 
 // Get all shipments
-app.get("/api/shipments", (req, res) => {
+app.get("/api/shipments", async (req, res) => {
   try {
-    const shipments = db.getAllShipments();
+    const shipments = await db.getAllShipments();
     res.json({
       success: true,
       shipments
@@ -361,7 +362,7 @@ app.get("/api/shipments", (req, res) => {
 });
 
 // Add a received item to a shipment
-app.post("/api/shipments/:id/received-items", (req, res) => {
+app.post("/api/shipments/:id/received-items", async (req, res) => {
   try {
     const shipmentId = req.params.id;
     const { upc, qtyReceived, deviceId } = req.body;
@@ -373,7 +374,7 @@ app.post("/api/shipments/:id/received-items", (req, res) => {
       });
     }
 
-    const result = db.addReceivedItem(shipmentId, upc, qtyReceived, deviceId);
+    const result = await db.addReceivedItem(shipmentId, upc, qtyReceived, deviceId);
 
     if (result.success) {
       res.json({
@@ -393,10 +394,10 @@ app.post("/api/shipments/:id/received-items", (req, res) => {
 });
 
 // Get all received items for a shipment
-app.get("/api/shipments/:id/received-items", (req, res) => {
+app.get("/api/shipments/:id/received-items", async (req, res) => {
   try {
     const shipmentId = req.params.id;
-    const items = db.getReceivedItems(shipmentId);
+    const items = await db.getReceivedItems(shipmentId);
 
     res.json({
       success: true,
@@ -412,12 +413,12 @@ app.get("/api/shipments/:id/received-items", (req, res) => {
 });
 
 // Sync received items (get items updated after timestamp)
-app.get("/api/shipments/:id/received-items/sync", (req, res) => {
+app.get("/api/shipments/:id/received-items/sync", async (req, res) => {
   try {
     const shipmentId = req.params.id;
     const lastSync = parseInt(req.query.lastSync) || 0;
 
-    const items = db.getReceivedItemsSince(shipmentId, lastSync);
+    const items = await db.getReceivedItemsSince(shipmentId, lastSync);
 
     res.json({
       success: true,
@@ -434,14 +435,15 @@ app.get("/api/shipments/:id/received-items/sync", (req, res) => {
 });
 
 // Complete a shipment
-app.post("/api/shipments/:id/complete", (req, res) => {
+app.post("/api/shipments/:id/complete", async (req, res) => {
   try {
-    const result = db.completeShipment(req.params.id);
+    const result = await db.completeShipment(req.params.id);
 
     if (result.success) {
+      const shipment = await db.getShipment(req.params.id);
       res.json({
         success: true,
-        shipment: db.getShipment(req.params.id)
+        shipment
       });
     } else {
       res.status(404).json(result);
@@ -456,9 +458,9 @@ app.post("/api/shipments/:id/complete", (req, res) => {
 });
 
 // Delete a shipment
-app.delete("/api/shipments/:id", (req, res) => {
+app.delete("/api/shipments/:id", async (req, res) => {
   try {
-    const result = db.deleteShipment(req.params.id);
+    const result = await db.deleteShipment(req.params.id);
 
     res.json({
       success: result.success

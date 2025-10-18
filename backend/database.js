@@ -1,158 +1,305 @@
-const fs = require('fs');
-const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-const DB_FILE = path.join(__dirname, 'shipments.json');
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
-// Initialize database
-function initDB() {
-  if (!fs.existsSync(DB_FILE)) {
-    const initialData = {
-      shipments: {},
-      receivedItems: {}
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
-  }
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_KEY in .env file');
 }
 
-// Read database
-function readDB() {
-  try {
-    const data = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading database:', error);
-    return { shipments: {}, receivedItems: {} };
-  }
-}
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Write database
-function writeDB(data) {
+// Create or update shipment
+async function saveShipment(shipmentId, shipmentData) {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    const { data, error } = await supabase
+      .from('shipments')
+      .upsert({
+        id: shipmentId,
+        date: shipmentData.date,
+        document_ids: shipmentData.documentIds,
+        expected_items: shipmentData.expectedItems,
+        status: shipmentData.status || 'in-progress',
+        created_at: shipmentData.createdAt,
+        completed_at: shipmentData.completedAt || null,
+        last_updated: Date.now(),
+      }, {
+        onConflict: 'id'
+      });
+
+    if (error) {
+      console.error('Error saving shipment:', error);
+      return false;
+    }
+
     return true;
   } catch (error) {
-    console.error('Error writing database:', error);
+    console.error('Error in saveShipment:', error);
     return false;
   }
 }
 
-// Create or update shipment
-function saveShipment(shipmentId, shipmentData) {
-  const db = readDB();
-
-  db.shipments[shipmentId] = {
-    ...shipmentData,
-    id: shipmentId,
-    lastUpdated: Date.now()
-  };
-
-  // Initialize receivedItems for this shipment if not exists
-  if (!db.receivedItems[shipmentId]) {
-    db.receivedItems[shipmentId] = {};
-  }
-
-  return writeDB(db);
-}
-
 // Get shipment by ID
-function getShipment(shipmentId) {
-  const db = readDB();
-  return db.shipments[shipmentId] || null;
+async function getShipment(shipmentId) {
+  try {
+    const { data, error } = await supabase
+      .from('shipments')
+      .select('*')
+      .eq('id', shipmentId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Not found
+        return null;
+      }
+      console.error('Error getting shipment:', error);
+      return null;
+    }
+
+    // Transform data back to original format
+    return {
+      id: data.id,
+      date: data.date,
+      documentIds: data.document_ids,
+      expectedItems: data.expected_items,
+      status: data.status,
+      createdAt: data.created_at,
+      completedAt: data.completed_at,
+      lastUpdated: data.last_updated,
+    };
+  } catch (error) {
+    console.error('Error in getShipment:', error);
+    return null;
+  }
 }
 
 // Get all shipments
-function getAllShipments() {
-  const db = readDB();
-  return Object.values(db.shipments);
+async function getAllShipments() {
+  try {
+    const { data, error } = await supabase
+      .from('shipments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error getting all shipments:', error);
+      return [];
+    }
+
+    // Transform data back to original format
+    return data.map(shipment => ({
+      id: shipment.id,
+      date: shipment.date,
+      documentIds: shipment.document_ids,
+      expectedItems: shipment.expected_items,
+      status: shipment.status,
+      createdAt: shipment.created_at,
+      completedAt: shipment.completed_at,
+      lastUpdated: shipment.last_updated,
+    }));
+  } catch (error) {
+    console.error('Error in getAllShipments:', error);
+    return [];
+  }
 }
 
 // Add or update received item for a shipment
-function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
-  const db = readDB();
-
-  // Ensure shipment exists
-  if (!db.shipments[shipmentId]) {
-    return { success: false, error: 'Shipment not found' };
-  }
-
-  // Ensure receivedItems for shipment exists
-  if (!db.receivedItems[shipmentId]) {
-    db.receivedItems[shipmentId] = {};
-  }
-
-  // Get existing or create new
-  const existing = db.receivedItems[shipmentId][upc];
-
-  if (existing) {
-    // Update existing - add to quantity
-    existing.qtyReceived += qtyReceived;
-    existing.lastUpdated = Date.now();
-
-    // Track which devices scanned this
-    if (!existing.scannedBy.includes(deviceId)) {
-      existing.scannedBy.push(deviceId);
+async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
+  try {
+    // First check if shipment exists
+    const shipment = await getShipment(shipmentId);
+    if (!shipment) {
+      return { success: false, error: 'Shipment not found' };
     }
-  } else {
-    // Create new received item
-    db.receivedItems[shipmentId][upc] = {
-      upc,
-      qtyReceived,
-      scannedBy: [deviceId],
-      lastUpdated: Date.now()
-    };
-  }
 
-  const success = writeDB(db);
-  return {
-    success,
-    item: db.receivedItems[shipmentId][upc]
-  };
+    // Check if item already exists
+    const { data: existing, error: fetchError } = await supabase
+      .from('received_items')
+      .select('*')
+      .eq('shipment_id', shipmentId)
+      .eq('upc', upc)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // Error other than "not found"
+      console.error('Error checking existing item:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    let result;
+
+    if (existing) {
+      // Update existing - add to quantity
+      const newQty = existing.qty_received + qtyReceived;
+      const scannedBy = existing.scanned_by || [];
+
+      if (!scannedBy.includes(deviceId)) {
+        scannedBy.push(deviceId);
+      }
+
+      const { data, error } = await supabase
+        .from('received_items')
+        .update({
+          qty_received: newQty,
+          scanned_by: scannedBy,
+          last_updated: Date.now(),
+        })
+        .eq('shipment_id', shipmentId)
+        .eq('upc', upc)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating received item:', error);
+        return { success: false, error: error.message };
+      }
+
+      result = data;
+    } else {
+      // Create new received item
+      const { data, error } = await supabase
+        .from('received_items')
+        .insert({
+          shipment_id: shipmentId,
+          upc: upc,
+          qty_received: qtyReceived,
+          scanned_by: [deviceId],
+          last_updated: Date.now(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating received item:', error);
+        return { success: false, error: error.message };
+      }
+
+      result = data;
+    }
+
+    // Transform back to original format
+    return {
+      success: true,
+      item: {
+        upc: result.upc,
+        qtyReceived: result.qty_received,
+        scannedBy: result.scanned_by,
+        lastUpdated: result.last_updated,
+      }
+    };
+  } catch (error) {
+    console.error('Error in addReceivedItem:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 // Get all received items for a shipment
-function getReceivedItems(shipmentId) {
-  const db = readDB();
-  const items = db.receivedItems[shipmentId] || {};
-  return Object.values(items);
+async function getReceivedItems(shipmentId) {
+  try {
+    const { data, error } = await supabase
+      .from('received_items')
+      .select('*')
+      .eq('shipment_id', shipmentId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error getting received items:', error);
+      return [];
+    }
+
+    // Transform back to original format
+    return data.map(item => ({
+      upc: item.upc,
+      qtyReceived: item.qty_received,
+      scannedBy: item.scanned_by,
+      lastUpdated: item.last_updated,
+    }));
+  } catch (error) {
+    console.error('Error in getReceivedItems:', error);
+    return [];
+  }
 }
 
 // Get received items updated after a timestamp
-function getReceivedItemsSince(shipmentId, timestamp) {
-  const db = readDB();
-  const items = db.receivedItems[shipmentId] || {};
+async function getReceivedItemsSince(shipmentId, timestamp) {
+  try {
+    const { data, error } = await supabase
+      .from('received_items')
+      .select('*')
+      .eq('shipment_id', shipmentId)
+      .gt('last_updated', timestamp)
+      .order('created_at', { ascending: true });
 
-  return Object.values(items).filter(item => item.lastUpdated > timestamp);
+    if (error) {
+      console.error('Error getting received items since timestamp:', error);
+      return [];
+    }
+
+    // Transform back to original format
+    return data.map(item => ({
+      upc: item.upc,
+      qtyReceived: item.qty_received,
+      scannedBy: item.scanned_by,
+      lastUpdated: item.last_updated,
+    }));
+  } catch (error) {
+    console.error('Error in getReceivedItemsSince:', error);
+    return [];
+  }
 }
 
 // Complete shipment
-function completeShipment(shipmentId) {
-  const db = readDB();
+async function completeShipment(shipmentId) {
+  try {
+    const { data, error } = await supabase
+      .from('shipments')
+      .update({
+        status: 'completed',
+        completed_at: Date.now(),
+        last_updated: Date.now(),
+      })
+      .eq('id', shipmentId)
+      .select()
+      .single();
 
-  if (!db.shipments[shipmentId]) {
-    return { success: false, error: 'Shipment not found' };
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return { success: false, error: 'Shipment not found' };
+      }
+      console.error('Error completing shipment:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error in completeShipment:', error);
+    return { success: false, error: error.message };
   }
-
-  db.shipments[shipmentId].status = 'completed';
-  db.shipments[shipmentId].completedAt = Date.now();
-  db.shipments[shipmentId].lastUpdated = Date.now();
-
-  const success = writeDB(db);
-  return { success };
 }
 
-// Delete shipment
-function deleteShipment(shipmentId) {
-  const db = readDB();
+// Delete shipment and all its received items
+async function deleteShipment(shipmentId) {
+  try {
+    // Supabase will automatically delete received_items due to ON DELETE CASCADE
+    const { error } = await supabase
+      .from('shipments')
+      .delete()
+      .eq('id', shipmentId);
 
-  delete db.shipments[shipmentId];
-  delete db.receivedItems[shipmentId];
+    if (error) {
+      console.error('Error deleting shipment:', error);
+      return { success: false, error: error.message };
+    }
 
-  const success = writeDB(db);
-  return { success };
+    return { success: true };
+  } catch (error) {
+    console.error('Error in deleteShipment:', error);
+    return { success: false, error: error.message };
+  }
 }
-
-// Initialize DB on module load
-initDB();
 
 module.exports = {
   saveShipment,
@@ -162,5 +309,6 @@ module.exports = {
   getReceivedItems,
   getReceivedItemsSince,
   completeShipment,
-  deleteShipment
+  deleteShipment,
+  supabase, // Export for potential direct use
 };

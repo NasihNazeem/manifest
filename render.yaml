@@ -1,0 +1,21 @@
+services:
+  # Backend API Service
+  - type: web
+    name: manifest-backend
+    runtime: node
+    env: node
+    region: oregon # Choose: oregon, frankfurt, singapore, ohio
+    plan: free # or starter, standard, pro
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    rootDir: .
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: SUPABASE_URL
+        sync: false # You'll add this manually in Render dashboard
+      - key: SUPABASE_KEY
+        sync: false # You'll add this manually in Render dashboard
+    healthCheckPath: /

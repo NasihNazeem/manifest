@@ -12,7 +12,8 @@
       "Bash(sed:*)",
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
