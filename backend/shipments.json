@@ -1,4 +1,1134 @@
 {
-  "shipments": {},
-  "receivedItems": {}
+  "shipments": {
+    "1760764612058": {
+      "id": "1760764612058",
+      "date": "2025-10-18",
+      "documentIds": [
+        "85871040",
+        "85871041",
+        "85871308",
+        "85871309"
+      ],
+      "expectedItems": [
+        {
+          "itemNumber": "1000790",
+          "legacyItemNumber": "07041-830",
+          "description": "ZWKIN00 Coffee spoon 14 OT polished",
+          "upc": "4009839321733",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1001349",
+          "legacyItemNumber": "30499-504",
+          "description": "ZWUNS10 Knife sheath 27 plastic",
+          "upc": "4009839251641",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1001953",
+          "legacyItemNumber": "33951-241",
+          "description": "MI40F10 Gyutoh 240 brown pakka wood",
+          "upc": "4009839390593",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1001981",
+          "legacyItemNumber": "34076-231",
+          "description": "MI60T10 Bread knife 230 brown pakka wood",
+          "upc": "4009839308109",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1002390",
+          "legacyItemNumber": "36111-201",
+          "description": "ZWGOU10 Chef's knife 200 fine edge",
+          "upc": "4009839379710",
+          "qtyExpected": 11
+        },
+        {
+          "itemNumber": "1002438",
+          "legacyItemNumber": "36129-171",
+          "description": "ZWGOU10 Nakiri 170 fine edge",
+          "upc": "4009839407994",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1002498",
+          "legacyItemNumber": "36804-003",
+          "description": "ZWFNS20 Vac.boxset S/M/L_3 st-gr plastic",
+          "upc": "4009839523915",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1002774",
+          "legacyItemNumber": "38401-201",
+          "description": "ZWPRO10 Chef's knife 200 fine edge",
+          "upc": "4009839257148",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1003085",
+          "legacyItemNumber": "39500-076",
+          "description": "ZWSRO20 Coffee glass set 2 GB",
+          "upc": "4009839326011",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1003091",
+          "legacyItemNumber": "39500-079",
+          "description": "ZWSRO20 Dessert glass set 2 GB",
+          "upc": "4009839334658",
+          "qtyExpected": 7
+        },
+        {
+          "itemNumber": "1003100",
+          "legacyItemNumber": "39500-214",
+          "description": "ZWSBA20 Beer glass set 2 GB",
+          "upc": "4009839397783",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1003107",
+          "legacyItemNumber": "39500-507",
+          "description": "ZWTH110 Thermo flask 450 white-grey",
+          "upc": "4009839533990",
+          "qtyExpected": 20
+        },
+        {
+          "itemNumber": "1003108",
+          "legacyItemNumber": "39500-508",
+          "description": "ZWTH110 Thermo flask 450 black",
+          "upc": "4009839534003",
+          "qtyExpected": 19
+        },
+        {
+          "itemNumber": "1003109",
+          "legacyItemNumber": "39500-509",
+          "description": "ZWTH110 Food jar 700 wh-gr StaiSteel",
+          "upc": "4009839534010",
+          "qtyExpected": 14
+        },
+        {
+          "itemNumber": "1003110",
+          "legacyItemNumber": "39500-510",
+          "description": "ZWTH110 Food jar 700 black StaiSteel",
+          "upc": "4009839534027",
+          "qtyExpected": 7
+        },
+        {
+          "itemNumber": "1003111",
+          "legacyItemNumber": "39500-511",
+          "description": "ZWTH110 Thermo flask 420 white-grey",
+          "upc": "4009839534034",
+          "qtyExpected": 20
+        },
+        {
+          "itemNumber": "1003112",
+          "legacyItemNumber": "39500-512",
+          "description": "ZWTH110 Thermo flask 420 black",
+          "upc": "4009839534041",
+          "qtyExpected": 13
+        },
+        {
+          "itemNumber": "1003114",
+          "legacyItemNumber": "39506-002",
+          "description": "ZWGUS10 Storage jar 1.4 SL rect BorosiGl",
+          "upc": "4009839392320",
+          "qtyExpected": 7
+        },
+        {
+          "itemNumber": "1003115",
+          "legacyItemNumber": "39506-003",
+          "description": "ZWGUS10 Storage jar 600 SL rnd BorosiGl",
+          "upc": "4009839392337",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1003116",
+          "legacyItemNumber": "39506-004",
+          "description": "ZWGUS10 Storage jar 1.3 SL rnd BorosiGl",
+          "upc": "4009839392344",
+          "qtyExpected": 5
+        },
+        {
+          "itemNumber": "1003117",
+          "legacyItemNumber": "39506-005",
+          "description": "ZWGUS10 Storage jar 500 SL sq BorosiGl",
+          "upc": "4009839392351",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1003118",
+          "legacyItemNumber": "39506-006",
+          "description": "ZWGUS10 Storage jar 1.1 SL sq BorosiGl",
+          "upc": "4009839392368",
+          "qtyExpected": 11
+        },
+        {
+          "itemNumber": "1003414",
+          "legacyItemNumber": "40501-307",
+          "description": "STFRL10 Kitchen towel 70x50 blue",
+          "upc": "3272340038181",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1003827",
+          "legacyItemNumber": "40508-565",
+          "description": "STCE310 Mug 350 GB cherry ceramic",
+          "upc": "4009839376597",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1003829",
+          "legacyItemNumber": "40508-566",
+          "description": "STCE310 Mug 350 dark-blue ceramic",
+          "upc": "4009839376603",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1004465",
+          "legacyItemNumber": "40510-809",
+          "description": "STCES10 Oven dish 27x20 cherry M ceramic",
+          "upc": "4009839311352",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1004650",
+          "legacyItemNumber": "40511-165",
+          "description": "STCES10 Pie dish 24 dark-blue round cera",
+          "upc": "4009839317323",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1004846",
+          "legacyItemNumber": "40511-580",
+          "description": "STCE410 Garlic keeper 500 cherry round",
+          "upc": "4009839337567",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1005587",
+          "legacyItemNumber": "42401-000-0",
+          "description": "ZWZPR10 Nail clipper 8 silver-black matt",
+          "upc": "4009839375941",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1005629",
+          "legacyItemNumber": "42441-100-0",
+          "description": "ZWZST10 Nail clipper 8 black-white",
+          "upc": "4009839273360",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1005907",
+          "legacyItemNumber": "58000-004-0",
+          "description": "TMTMR10 Eyelash curler",
+          "upc": "0380971034032",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1006087",
+          "legacyItemNumber": "65060-000",
+          "description": "ZWZQU20 Pot set 5 round 18/10",
+          "upc": "4009839308413",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1006099",
+          "legacyItemNumber": "65124-240",
+          "description": "ZWZPO10 Stock pot high 24 rnd 18/10",
+          "upc": "4009839530555",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1007562",
+          "legacyItemNumber": "32602-001-9",
+          "description": "ZWUNS10 Knife sharpener 19 plastic",
+          "upc": "4009839339288",
+          "qtyExpected": 18
+        },
+        {
+          "itemNumber": "1007576",
+          "legacyItemNumber": "40508-217-9",
+          "description": "STCE120 Bowl set 2 cherry 15 ceramic",
+          "upc": "3272340046728",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1007732",
+          "legacyItemNumber": "38071-020",
+          "description": "ZWTGR22 Knife set 1 red",
+          "upc": "4009839533716",
+          "qtyExpected": 23
+        },
+        {
+          "itemNumber": "1010588",
+          "legacyItemNumber": "53103-501",
+          "description": "ZWENY13 Drip coffee maker 1.5 bk US/CA",
+          "upc": "4009839643316",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1010590",
+          "legacyItemNumber": "53104-701",
+          "description": "ZWENY13 Coffee grinder black US/CA",
+          "upc": "4009839643330",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1010832",
+          "legacyItemNumber": "11299-440",
+          "description": "HIUNS14 Knife sharpener plastic",
+          "upc": "4009839644207",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1010994",
+          "legacyItemNumber": "17571-015",
+          "description": "HIDYC24 Knife block set 15 brown rubber",
+          "upc": "4009839423604",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1012376",
+          "legacyItemNumber": "32576-230",
+          "description": "ZWUNS00 Sharpening steel 23 StaiSteel",
+          "upc": "4009839487606",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1013254",
+          "legacyItemNumber": "07126-004",
+          "description": "ZWMIM20 Chopstick set 4 GB silver",
+          "upc": "4009839542855",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1013282",
+          "legacyItemNumber": "07141-265",
+          "description": "ZWNOA20 Menu set 63 polished",
+          "upc": "4009839537790",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1013413",
+          "legacyItemNumber": "11204-096",
+          "description": "HIHEL22 Knife set 24 mixed colours",
+          "upc": "4009839278891",
+          "qtyExpected": 24
+        },
+        {
+          "itemNumber": "1014171",
+          "legacyItemNumber": "39500-126",
+          "description": "ZWSOP20 Latte glass set 8",
+          "upc": "4009839542015",
+          "qtyExpected": 5
+        },
+        {
+          "itemNumber": "1016120",
+          "legacyItemNumber": "53101-500",
+          "description": "ZWENY10 El.kettle Pro 1.5 silv US/CA",
+          "upc": "4009839524530",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1016610",
+          "description": "40151-MGTMTMG13 Nail clipper set",
+          "upc": "0380970128422",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1016644",
+          "legacyItemNumber": "64040-022",
+          "description": "ZWJOY24 Pots and pans set 11 round 18/10",
+          "upc": "4009839525919",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1016765",
+          "legacyItemNumber": "65020-004",
+          "description": "ZWZVC20 Pots and pans set 10 round 18/10",
+          "upc": "4009839525865",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1016795",
+          "legacyItemNumber": "65029-830",
+          "description": "ZWZVC10 Wok 30 round 18/10",
+          "upc": "4009839529733",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1017094",
+          "legacyItemNumber": "66214-003",
+          "description": "ZWZMO21 Pots and pans set 3 bk rnd alu",
+          "upc": "4009839542213",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1017129",
+          "legacyItemNumber": "66308-003",
+          "description": "ZWZMQ20 Fry pan set 3 sr-bk rnd alu",
+          "upc": "4009839536229",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1017134",
+          "legacyItemNumber": "66309-001",
+          "description": "ZWZMQ20 Fry pan set 2 black round alu",
+          "upc": "4009839385223",
+          "qtyExpected": 5
+        },
+        {
+          "itemNumber": "1017312",
+          "legacyItemNumber": "70001-002",
+          "description": "HIKEL10 Sauteuse 30 silver-black rnd alu",
+          "upc": "4009839374562",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1017345",
+          "legacyItemNumber": "70050-003",
+          "description": "HICRI24 Fry pan set 3 black round alu",
+          "upc": "4009839547140",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1017359",
+          "legacyItemNumber": "71140-320",
+          "description": "ZWEX310 Wok 32 round 18/10",
+          "upc": "4009839542510",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1018649",
+          "legacyItemNumber": "35145-015",
+          "description": "ZW4ST20 Knife block set +KiS 7 ash",
+          "upc": "4009839539749",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1019275",
+          "legacyItemNumber": "38720-062",
+          "description": "ZWTGR14 Peeling knife 60 black",
+          "upc": "4009839385575",
+          "qtyExpected": 10
+        },
+        {
+          "itemNumber": "1020080",
+          "legacyItemNumber": "34370-007",
+          "description": "MI5MD20 Knife block set 7 brown bamboo",
+          "upc": "4009839302107",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1020688",
+          "legacyItemNumber": "2742-R",
+          "description": "TMTMR13 Blackhead remover",
+          "upc": "0380972742022",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1020914",
+          "legacyItemNumber": "36610-006",
+          "description": "ZWZCT14 2-in-1 peeler 18 grey plastic",
+          "upc": "4009839647857",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1021971",
+          "description": "1021971HICE724 Bakeware set 8 cherry",
+          "upc": "4009839652578",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1022058",
+          "legacyItemNumber": "53105-100",
+          "description": "ZWENY14 Electric kettle 1 silver US/CA",
+          "upc": "4009839653094",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1022367",
+          "legacyItemNumber": "35134-440",
+          "description": "ZW4ST20 Knife block set +KiS 4 wh ash",
+          "upc": "4009839654848",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1022867",
+          "description": "1022867ZWFNS24 Mixed set 16 la-mer",
+          "upc": "4009839656651",
+          "qtyExpected": 5
+        },
+        {
+          "itemNumber": "1023395",
+          "legacyItemNumber": "4096-R",
+          "description": "TMUNS23 Manicure set 3 pink",
+          "upc": "0380970159113",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1008401",
+          "description": "ZW5ST20 Steak set 2",
+          "upc": "4009839400063",
+          "qtyExpected": 7
+        },
+        {
+          "itemNumber": "1021193",
+          "description": "ZWCHP24 Chopstick set 12 GB coloured",
+          "upc": "4009839649516",
+          "qtyExpected": 17
+        },
+        {
+          "itemNumber": "1021638",
+          "description": "1021638ZWTMC21 Prepack 4 yellow",
+          "upc": "4009839651762",
+          "qtyExpected": 21
+        },
+        {
+          "itemNumber": "1023908",
+          "description": "ZWPLB10 Paring knife 100 white fine edge",
+          "upc": "4009839660719",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1024006",
+          "description": "ZWCOF24 PODripperSet 2 18/10",
+          "upc": "4009839661037",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1024219",
+          "description": "ZWTH114 Thermo flask tea 420 pink",
+          "upc": "4009839662423",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1024220",
+          "description": "ZWTH114 Thermo flask 450 pink",
+          "upc": "4009839662430",
+          "qtyExpected": 19
+        },
+        {
+          "itemNumber": "1024221",
+          "description": "ZWTH114 Thermo flask 1 pink",
+          "upc": "4009839662447",
+          "qtyExpected": 5
+        },
+        {
+          "itemNumber": "1025130",
+          "description": "ZWFCU14 CUBE Cover S / 10 white",
+          "upc": "4009839663840",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1025149",
+          "description": "ZWFCU24 CUBE Set XS / 3 tr-whi",
+          "upc": "4009839663949",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1025338",
+          "description": "ZWFCU24 CUBE Set diffusers 6 white",
+          "upc": "4009839664830",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1025381",
+          "description": "ZWFCU14 CUBE Cover 3S / 10 black",
+          "upc": "4009839665158",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1025384",
+          "description": "ZWFCU14 CUBE Cover 2S / 10 blue",
+          "upc": "4009839665189",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1025388",
+          "description": "ZWFCU14 CUBE Cover 2S / 10 sage",
+          "upc": "4009839665226",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1028850",
+          "description": "ZWPE114 Fry pan 28 grey round 18/10",
+          "upc": "4009839676338",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1029095",
+          "description": "STCE324 Mug set macaron 6 mixcol M",
+          "upc": "3272340059261",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1029411",
+          "description": "ZWJOP10 Fry pan 20 round 18/10",
+          "upc": "4009839679001",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1029413",
+          "description": "ZWJOP10 Fry pan 28 round 18/10",
+          "upc": "4009839679025",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1029475",
+          "description": "STPAN14 Fry pan 22 black round cast iron",
+          "upc": "3272340065705",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1030215",
+          "description": "STCOC10 Cocotte 22 sorbet rose rnd cast",
+          "upc": "3272340066399",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1030305",
+          "description": "ZWCGZ14 Wok 28 grey round aluminium",
+          "upc": "4009839682605",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1030903",
+          "description": "ZWFOC14 Saute pan with lid 28 bk rnd alu",
+          "upc": "4009839685729",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "1030908",
+          "description": "ZWFOC24 Pots and pans set 10 bk rnd alu",
+          "upc": "4009839685774",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1030913",
+          "description": "ZWFNS14 Vacuum lunch box black PP",
+          "upc": "4009839685804",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1032995",
+          "description": "ZWZBG14 Fry pan 20 black round aluminium",
+          "upc": "4009839695773",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1033084",
+          "description": "ZWSPM14 Chef's knife 200 fine edge",
+          "upc": "4009839696312",
+          "qtyExpected": 1
+        },
+        {
+          "itemNumber": "6002251",
+          "description": "ZWUNS01 Shopping Bag Medium",
+          "upc": "4009839557552",
+          "qtyExpected": 200
+        },
+        {
+          "itemNumber": "1001533",
+          "legacyItemNumber": "31070-101",
+          "description": "ZW4ST10 Paring knife 100 fine edge",
+          "upc": "4009839006913",
+          "qtyExpected": 50
+        },
+        {
+          "itemNumber": "1001567",
+          "legacyItemNumber": "31071-201",
+          "description": "ZW4ST10 Chef's knife 200 fine edge",
+          "upc": "4009839007132",
+          "qtyExpected": 25
+        },
+        {
+          "itemNumber": "1001587",
+          "legacyItemNumber": "31076-201",
+          "description": "ZW4ST10 Bread knife 200",
+          "upc": "4009839007262",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1001635",
+          "legacyItemNumber": "31119-181",
+          "description": "ZW4ST10 Santoku 180 hollow ground",
+          "upc": "4009839185014",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1002312",
+          "legacyItemNumber": "35175-000",
+          "description": "ZW4ST24 Knife set 2",
+          "upc": "4009839094897",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1002402",
+          "legacyItemNumber": "36115-151",
+          "description": "ZWGOU10 Cleaver 150",
+          "upc": "4009839379741",
+          "qtyExpected": 20
+        },
+        {
+          "itemNumber": "1002498",
+          "legacyItemNumber": "36804-003",
+          "description": "ZWFNS20 Vac.boxset S/M/L_3 st-gr plastic",
+          "upc": "4009839523915",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1003044",
+          "legacyItemNumber": "39180-001",
+          "description": "ZWCHP20 Chopstick set 10 no-color",
+          "upc": "4009839393822",
+          "qtyExpected": 18
+        },
+        {
+          "itemNumber": "1003085",
+          "legacyItemNumber": "39500-076",
+          "description": "ZWSRO20 Coffee glass set 2 GB",
+          "upc": "4009839326011",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1003089",
+          "legacyItemNumber": "39500-078",
+          "description": "ZWSRO20 Latte glass set 2 OT",
+          "upc": "4009839326035",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1003091",
+          "legacyItemNumber": "39500-079",
+          "description": "ZWSRO20 Dessert glass set 2 GB",
+          "upc": "4009839334658",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1003093",
+          "legacyItemNumber": "39500-110",
+          "description": "ZWSOP20 Espresso glass set 2 GB",
+          "upc": "4009839381140",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1003095",
+          "legacyItemNumber": "39500-112",
+          "description": "ZWSOP20 Coffee glass set 2 GB",
+          "upc": "4009839381164",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1003096",
+          "legacyItemNumber": "39500-113",
+          "description": "ZWSOP20 Cappuccino set 2 GB",
+          "upc": "4009839381171",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1003097",
+          "legacyItemNumber": "39500-114",
+          "description": "ZWSOP20 Latte glass set 2",
+          "upc": "4009839381188",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1003105",
+          "legacyItemNumber": "39500-300",
+          "description": "ZWSOP10 French press 750 BorosiGl",
+          "upc": "4009839411564",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1003107",
+          "legacyItemNumber": "39500-507",
+          "description": "ZWTH110 Thermo flask 450 white-grey",
+          "upc": "4009839533990",
+          "qtyExpected": 36
+        },
+        {
+          "itemNumber": "1003108",
+          "legacyItemNumber": "39500-508",
+          "description": "ZWTH110 Thermo flask 450 black",
+          "upc": "4009839534003",
+          "qtyExpected": 36
+        },
+        {
+          "itemNumber": "1003111",
+          "legacyItemNumber": "39500-511",
+          "description": "ZWTH110 Thermo flask 420 white-grey",
+          "upc": "4009839534034",
+          "qtyExpected": 36
+        },
+        {
+          "itemNumber": "1003113",
+          "legacyItemNumber": "39506-001",
+          "description": "ZWGUS10 Storage jar 600 SL rect BorosiGl",
+          "upc": "4009839392313",
+          "qtyExpected": 18
+        },
+        {
+          "itemNumber": "1003122",
+          "legacyItemNumber": "39643-016",
+          "description": "ZWZTA10 Colander 16 round 18/10",
+          "upc": "4009839375385",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1003123",
+          "legacyItemNumber": "39643-020",
+          "description": "ZWZTA10 Colander 20 round 18/10",
+          "upc": "4009839375392",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1003124",
+          "legacyItemNumber": "39643-024",
+          "description": "ZWZTA10 Colander 24 round 18/10",
+          "upc": "4009839375408",
+          "qtyExpected": 30
+        },
+        {
+          "itemNumber": "1003823",
+          "legacyItemNumber": "40508-548",
+          "description": "STCES10 Cocotte 12 black pumpkin ceramic",
+          "upc": "4009839397271",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1004471",
+          "legacyItemNumber": "40510-812",
+          "description": "STCES10 Oven dish 20x16 cherry S ceramic",
+          "upc": "4009839311383",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1004473",
+          "legacyItemNumber": "40510-813",
+          "description": "STCES10 Oven dish 20x16 dark-blue S cera",
+          "upc": "4009839311390",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1004603",
+          "legacyItemNumber": "40511-140",
+          "description": "STCES10 Oven dish 14x11 drkbu XS cera",
+          "upc": "4009839317071",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1004609",
+          "legacyItemNumber": "40511-144",
+          "description": "STCES10 Oven dish 20x16 white S ceramic",
+          "upc": "4009839317118",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1004629",
+          "legacyItemNumber": "40511-154",
+          "description": "STCES10 Oven dish 17 dark-blue ceramic",
+          "upc": "4009839317217",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1005582",
+          "legacyItemNumber": "41900-231",
+          "description": "ZWSPL10 Tailor's shear 23 bk StaiSteel",
+          "upc": "4009839095696",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1007576",
+          "legacyItemNumber": "40508-217-9",
+          "description": "STCE120 Bowl set 2 cherry 15 ceramic",
+          "upc": "3272340046728",
+          "qtyExpected": 16
+        },
+        {
+          "itemNumber": "1007719",
+          "legacyItemNumber": "36803-003",
+          "description": "ZWFNS20 Vacuum box set S/M/L / 3 grey",
+          "upc": "4009839523861",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1009480",
+          "legacyItemNumber": "36801-304",
+          "description": "ZWFNS14 Vacuum gratin dish gratin la-mer",
+          "upc": "4009839546105",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1009868",
+          "legacyItemNumber": "36812-200",
+          "description": "ZWFNS14 Vacuum fridge box frigde st-gr",
+          "upc": "4009839641886",
+          "qtyExpected": 5
+        },
+        {
+          "itemNumber": "1010587",
+          "legacyItemNumber": "53103-500",
+          "description": "ZWENY13 Drip coffee maker 1.5 silv US/CA",
+          "upc": "4009839643309",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1010588",
+          "legacyItemNumber": "53103-501",
+          "description": "ZWENY13 Drip coffee maker 1.5 bk US/CA",
+          "upc": "4009839643316",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1011379",
+          "legacyItemNumber": "22520-365",
+          "description": "HIALC24 Menu set 65 polished",
+          "upc": "4009839292293",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1011388",
+          "legacyItemNumber": "22529-444",
+          "description": "HIANR20 Tea spoon set 4",
+          "upc": "4009839426964",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1011389",
+          "legacyItemNumber": "22529-446",
+          "description": "HIANR20 Dinner spoon set 4",
+          "upc": "4009839426940",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1013497",
+          "legacyItemNumber": "11592-000",
+          "description": "HIUNS20 Cutting board set 3 purewh PP",
+          "upc": "4009839393723",
+          "qtyExpected": 16
+        },
+        {
+          "itemNumber": "1014543",
+          "legacyItemNumber": "40503-120",
+          "description": "STUNS20 Kitchen gadgets sets 10 bk sili",
+          "upc": "3272340041563",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1016018",
+          "legacyItemNumber": "40998-632",
+          "description": "ZWPLU20 Pots and pans set 3 round 18/10",
+          "upc": "4009839393570",
+          "qtyExpected": 12
+        },
+        {
+          "itemNumber": "1016117",
+          "legacyItemNumber": "53101-201",
+          "description": "ZWENY10 Electric kettle 1.5 black US/CA",
+          "upc": "4009839542251",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1016120",
+          "legacyItemNumber": "53101-500",
+          "description": "ZWENY10 El.kettle Pro 1.5 silv US/CA",
+          "upc": "4009839524530",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1017313",
+          "legacyItemNumber": "70001-003",
+          "description": "HIKEL10 Egg Poacher silver-black round",
+          "upc": "4009839374579",
+          "qtyExpected": 18
+        },
+        {
+          "itemNumber": "1018638",
+          "legacyItemNumber": "35124-002",
+          "description": "ZWUNS20 Cutt.boardset 2 mattgy plastic",
+          "upc": "4009839539275",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1021353",
+          "legacyItemNumber": "22769-820",
+          "description": "ZWBSA20 Menu set 20 slate polished",
+          "upc": "4009839650567",
+          "qtyExpected": 3
+        },
+        {
+          "itemNumber": "1021365",
+          "legacyItemNumber": "40508-241",
+          "description": "STCE124 Bowl set Mcrn 6 mixcol 12 cera",
+          "upc": "3272340052132",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1021841",
+          "legacyItemNumber": "40512-018",
+          "description": "HICE724 Bakeware set 8 white",
+          "upc": "4009839652332",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1021969",
+          "description": "1021969HICE724 Bakeware set 8 dark-blue",
+          "upc": "4009839652554",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1021971",
+          "description": "1021971HICE724 Bakeware set 8 cherry",
+          "upc": "4009839652578",
+          "qtyExpected": 2
+        },
+        {
+          "itemNumber": "1022465",
+          "legacyItemNumber": "36815-008",
+          "description": "ZWFNS24 Vac start set glass la-mer 8",
+          "upc": "4009839655289",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1009139",
+          "legacyItemNumber": "66309-246",
+          "description": "ZWZMQ14 Fry pan 24 round aluminium",
+          "upc": "4009839361586",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1021456",
+          "legacyItemNumber": "36813-102",
+          "description": "ZWFNS24 Vac.accSet drptrG M/L_2 wh",
+          "upc": "4009839650918",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1021969",
+          "description": "1021969HICE724 Bakeware set 8 dark-blue",
+          "upc": "4009839652554",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1023409",
+          "legacyItemNumber": "4219-R",
+          "description": "TMUNS23 Pedicure set 4",
+          "upc": "0380970219746",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1024869",
+          "description": "ZWUNS14 Air fryer 4 black",
+          "upc": "4009839663086",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1025985",
+          "description": "ZWFNS24 Vac.boxset S/M/L_3 la-mer glass",
+          "upc": "4009839665547",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1029084",
+          "description": "STCE310 Mug 100 citron XS ceramic",
+          "upc": "3272340059216",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1029085",
+          "description": "STCE310 Mug 250 citron S ceramic",
+          "upc": "3272340059247",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1029089",
+          "description": "STCE310 Mug 100 eucalyptus XS ceramic",
+          "upc": "3272340059254",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1029090",
+          "description": "STCE310 Mug 250 eucalyptus S ceramic",
+          "upc": "3272340059292",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1029095",
+          "description": "STCE324 Mug set macaron 6 mixcol M",
+          "upc": "3272340059261",
+          "qtyExpected": 10
+        },
+        {
+          "itemNumber": "1029760",
+          "description": "ZWPMP13 Saute pan with lid 24 gy rnd alu",
+          "upc": "4009839680441",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1029767",
+          "description": "ZWPMP23 Fry pan set 2 grey round alu",
+          "upc": "4009839680502",
+          "qtyExpected": 8
+        },
+        {
+          "itemNumber": "1030417",
+          "description": "ZWENY13 Personal blender mattwh US/CA",
+          "upc": "4009839682841",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1033360",
+          "description": "STCOC10 Cocotte 22 GB cherry round cast",
+          "upc": "3272340067822",
+          "qtyExpected": 4
+        },
+        {
+          "itemNumber": "1021190",
+          "description": "ZWTSS14 Household shear 16 StaiSteel",
+          "upc": "4009839649486",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1023828",
+          "description": "1023828ZWUNS24 Bakeware set 6 grapgy SpShap",
+          "upc": "4009839660306",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1026662",
+          "description": "ZWJUN24 Children's flatware set 4",
+          "upc": "4009839669309",
+          "qtyExpected": 0
+        },
+        {
+          "itemNumber": "1029093",
+          "description": "STCE310 Mug 500 eucalyptus XL ceramic",
+          "upc": "3272340059353",
+          "qtyExpected": 6
+        },
+        {
+          "itemNumber": "1030033",
+          "description": "HIUNS14 Deep frying set 2 grey round",
+          "upc": "4009839681820",
+          "qtyExpected": 10
+        },
+        {
+          "itemNumber": "1030302",
+          "description": "ZWCGZ14 Fry pan 20 grey round aluminium",
+          "upc": "4009839682575",
+          "qtyExpected": 0
+        }
+      ],
+      "status": "in-progress",
+      "createdAt": 1760764612058,
+      "lastUpdated": 1760764611994
+    }
+  },
+  "receivedItems": {
+    "1760764612058": {}
+  }
 }
