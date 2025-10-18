@@ -216,6 +216,35 @@ export async function completeShipmentOnServer(shipmentId: string): Promise<{
 }
 
 /**
+ * Delete a shipment from the server
+ */
+export async function deleteShipmentOnServer(shipmentId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const response = await fetch(
+      `${API_CONFIG.PDF_PARSER_URL.replace('/api/parse-pdf', '')}/api/shipments/${shipmentId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error deleting shipment from server:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Network error',
+    };
+  }
+}
+
+/**
  * Sync all data - push local changes and pull remote changes
  */
 export async function syncAll(shipmentId: string, localReceivedItems: any[]): Promise<{

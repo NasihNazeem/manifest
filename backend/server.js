@@ -35,20 +35,30 @@ function parseItemLine(line) {
   let legacyNumber = null;
 
   // Try patterns from most specific to least specific
+  // Pattern 1: XXXXX-XXX-X (e.g., 40508-217-9) - single char after last hyphen
   let legacyMatch = remaining.match(/^(\d{5}-\d{3}-[\dA-Z])/);
   if (legacyMatch) {
     legacyNumber = legacyMatch[1];
     remaining = remaining.substring(legacyMatch[1].length);
   } else {
+    // Pattern 2: XXXXX-XXX (e.g., 07041-830)
     legacyMatch = remaining.match(/^(\d{5}-\d{3})/);
     if (legacyMatch) {
       legacyNumber = legacyMatch[1];
       remaining = remaining.substring(legacyMatch[1].length);
     } else {
-      legacyMatch = remaining.match(/^(\d{4}-[\dA-Z])/);
+      // Pattern 3: XXXXX-XX (1-2 letters followed by space, e.g., 40151-MG )
+      legacyMatch = remaining.match(/^(\d{5}-[A-Z]{1,2})(?=\s)/);
       if (legacyMatch) {
         legacyNumber = legacyMatch[1];
         remaining = remaining.substring(legacyMatch[1].length);
+      } else {
+        // Pattern 4: XXXX-X (single char, e.g., 4219-R)
+        legacyMatch = remaining.match(/^(\d{4}-[\dA-Z])/);
+        if (legacyMatch) {
+          legacyNumber = legacyMatch[1];
+          remaining = remaining.substring(legacyMatch[1].length);
+        }
       }
     }
   }

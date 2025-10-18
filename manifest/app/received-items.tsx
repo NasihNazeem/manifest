@@ -18,6 +18,7 @@ import {
   exportShortages,
 } from '../utils/exportUtils';
 import { ReceivedItem } from '../types/shipment';
+import { deleteShipmentOnServer } from '../services/syncService';
 
 export default function ReceivedItemsScreen() {
   const router = useRouter();
@@ -63,7 +64,18 @@ export default function ReceivedItemsScreen() {
         {
           text: 'Yes, Cancel',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            if (!currentShipment) return;
+
+            // Delete from server first
+            const result = await deleteShipmentOnServer(currentShipment.id);
+
+            if (!result.success) {
+              console.error('Failed to delete shipment from server:', result.error);
+              // Still delete locally even if server delete fails
+            }
+
+            // Clear local state
             dispatch(cancelShipment());
             router.replace('/');
           },
