@@ -13,6 +13,7 @@ import { useAppSelector, useAppDispatch } from "../store/store";
 import {
   completeShipment,
   cancelShipment,
+  deleteShipment,
   updateReceivedItemQuantity,
   selectAllItemsWithStatus,
 } from "../store/shipmentSlice";
@@ -86,7 +87,8 @@ export default function ReceivedItemsScreen() {
             }
 
             // Clear local state
-            dispatch(cancelShipment());
+            dispatch(cancelShipment()); // Clear current shipment
+            dispatch(deleteShipment(currentShipment.id)); // Remove from history
             router.replace("/");
           },
         },
