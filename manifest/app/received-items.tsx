@@ -133,11 +133,36 @@ export default function ReceivedItemsScreen() {
     setEditQuantity(item.qtyReceived.toString());
   };
 
+  const handleQuantityChange = (text: string) => {
+    // Allow empty string for user to clear input
+    if (text === "") {
+      setEditQuantity("");
+      return;
+    }
+
+    // Only allow non-negative numbers
+    const numericValue = text.replace(/[^0-9]/g, "");
+    setEditQuantity(numericValue);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+    setEditQuantity("");
+  };
+
   const handleSaveQuantity = (upc: string) => {
     const qty = parseInt(editQuantity);
-    if (qty && qty > 0) {
-      dispatch(updateReceivedItemQuantity({ upc, qtyReceived: qty }));
+
+    // Validate: must be a valid number and >= 0
+    if (isNaN(qty) || qty < 0) {
+      Alert.alert("Invalid Quantity", "Please enter a valid quantity (0 or greater)");
+      return;
     }
+
+    // Update the quantity
+    dispatch(updateReceivedItemQuantity({ upc, qtyReceived: qty }));
+
+    // Reset edit state
     setEditingItem(null);
     setEditQuantity("");
   };
@@ -274,10 +299,16 @@ export default function ReceivedItemsScreen() {
                         <TextInput
                           style={styles.editInput}
                           value={editQuantity}
-                          onChangeText={setEditQuantity}
+                          onChangeText={handleQuantityChange}
                           keyboardType="numeric"
                           autoFocus
                         />
+                        <Pressable
+                          style={styles.cancelEditButton}
+                          onPress={handleCancelEdit}
+                        >
+                          <Text style={styles.cancelEditButtonText}>Cancel</Text>
+                        </Pressable>
                         <Pressable
                           style={styles.saveButton}
                           onPress={() => handleSaveQuantity(item.upc)}
@@ -516,6 +547,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     width: 60,
     textAlign: "center",
+  },
+  cancelEditButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  cancelEditButtonText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "600",
   },
   saveButton: {
     backgroundColor: "#34C759",
