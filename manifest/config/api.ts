@@ -23,5 +23,5 @@ export const isPdfParsingEnabled = () => {
 console.log("📡 API Configuration:");
 console.log(`   Base URL: ${API_CONFIG.BASE_URL}`);
 console.log(`   PDF Parser: ${API_CONFIG.PDF_PARSER_URL}`);
-console.log(`   Environment: ${__DEV__ ? 'Development' : 'Production'}`);
+console.log(`   Environment: ${__DEV__ ? "Development" : "Production"}`);
 console.log(`   Timestamp: ${new Date().toISOString()}`);

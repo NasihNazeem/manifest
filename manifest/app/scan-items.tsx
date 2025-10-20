@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   ScrollView,
   Alert,
   Modal,
-  KeyboardAvoidingView,
-  Platform,
   Clipboard,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -18,6 +16,7 @@ import { useAppSelector, useAppDispatch } from "../store/store";
 import { addReceivedItem } from "../store/shipmentSlice";
 import { ExpectedItem } from "../types/shipment";
 import { pushReceivedItem } from "../services/syncService";
+import Screen from "../components/Screen";
 
 export default function ScanItemsScreen() {
   const router = useRouter();
@@ -28,6 +27,8 @@ export default function ScanItemsScreen() {
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
+  const [isProcessingScan, setIsProcessingScan] = useState(false);
+  const isProcessingScanRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<ExpectedItem | null>(null);
   const [quantity, setQuantity] = useState("");
@@ -48,9 +49,11 @@ export default function ScanItemsScreen() {
   }, [currentShipment]);
 
   const requestCameraPermission = async () => {
-    const { status} = await Camera.requestCameraPermissionsAsync();
+    const { status } = await Camera.requestCameraPermissionsAsync();
     setHasPermission(status === "granted");
     if (status === "granted") {
+      isProcessingScanRef.current = false;
+      setIsProcessingScan(false);
       setScannerActive(true);
     }
   };
@@ -58,12 +61,22 @@ export default function ScanItemsScreen() {
   const handleCopyShipmentId = () => {
     if (currentShipment) {
       Clipboard.setString(currentShipment.id);
-      Alert.alert('Copied!', `Shipment ID ${currentShipment.id} copied to clipboard`);
+      Alert.alert(
+        "Copied!",
+        `Shipment ID ${currentShipment.id} copied to clipboard`
+      );
     }
   };
 
   const handleBarCodeScanned = ({ data }: BarcodeScanningResult) => {
+    if (isProcessingScanRef.current) {
+      return;
+    }
+
+    isProcessingScanRef.current = true;
+    setIsProcessingScan(true);
     setScannerActive(false);
+
     const item = currentShipment?.expectedItems.find(
       (item) => item.upc === data
     );
@@ -71,21 +84,39 @@ export default function ScanItemsScreen() {
     if (item) {
       setSelectedItem(item);
       setSearchQuery(data);
+      setTimeout(() => {
+        isProcessingScanRef.current = false;
+        setIsProcessingScan(false);
+      }, 500);
     } else {
-      // Item not found - offer to add as unexpected item
       Alert.alert(
         "Item Not Found",
         `UPC ${data} not found in expected items. Would you like to add it as an unexpected item?`,
         [
-          { text: "Cancel", style: "cancel" },
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => {
+              isProcessingScanRef.current = false;
+              setIsProcessingScan(false);
+            },
+          },
           {
             text: "Add Unexpected Item",
             onPress: () => {
               setShowUnexpectedItemForm(true);
               setUnexpectedItem((prev) => ({ ...prev, upc: data }));
+              isProcessingScanRef.current = false;
+              setIsProcessingScan(false);
             },
           },
-        ]
+        ],
+        {
+          onDismiss: () => {
+            isProcessingScanRef.current = false;
+            setIsProcessingScan(false);
+          },
+        }
       );
     }
   };
@@ -98,7 +129,6 @@ export default function ScanItemsScreen() {
       return;
     }
 
-    // Search for items containing the query (UPC, Item Number, Legacy Number, or Description)
     const item = currentShipment?.expectedItems.find(
       (item) =>
         item.upc.includes(query) ||
@@ -126,7 +156,6 @@ export default function ScanItemsScreen() {
       return;
     }
 
-    // Add to local state first
     dispatch(
       addReceivedItem({
         upc: selectedItem.upc,
@@ -134,12 +163,12 @@ export default function ScanItemsScreen() {
       })
     );
 
-    // Sync to server in background
     if (currentShipment) {
-      pushReceivedItem(currentShipment.id, selectedItem.upc, qty).catch(error => {
-        console.error('Failed to sync to server:', error);
-        // Don't block the user, sync will happen later
-      });
+      pushReceivedItem(currentShipment.id, selectedItem.upc, qty).catch(
+        (error) => {
+          console.error("Failed to sync to server:", error);
+        }
+      );
     }
 
     Alert.alert("Success", `Added ${qty} of ${selectedItem.description}`);
@@ -149,7 +178,6 @@ export default function ScanItemsScreen() {
   };
 
   const handleAddUnexpectedItem = async () => {
-    // Validate required fields - UPC is mandatory as single source of truth
     if (!unexpectedItem.upc.trim()) {
       Alert.alert("Error", "Please enter a UPC");
       return;
@@ -163,7 +191,6 @@ export default function ScanItemsScreen() {
 
     const upc = unexpectedItem.upc.trim();
 
-    // Add to local state first
     dispatch(
       addReceivedItem({
         upc,
@@ -173,9 +200,8 @@ export default function ScanItemsScreen() {
 
     // Sync to server in background
     if (currentShipment) {
-      pushReceivedItem(currentShipment.id, upc, qty).catch(error => {
-        console.error('Failed to sync to server:', error);
-        // Don't block the user, sync will happen later
+      pushReceivedItem(currentShipment.id, upc, qty).catch((error) => {
+        console.error("Failed to sync to server:", error);
       });
     }
 
@@ -184,7 +210,6 @@ export default function ScanItemsScreen() {
       `Added unexpected item with UPC ${upc} (Qty: ${qty})`
     );
 
-    // Reset form
     setShowUnexpectedItemForm(false);
     setUnexpectedItem({
       itemNumber: "",
@@ -212,10 +237,7 @@ export default function ScanItemsScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <Screen style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -223,32 +245,38 @@ export default function ScanItemsScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Scan or Search Items</Text>
-          <TouchableOpacity
+          <Pressable
             style={styles.viewReceivedButton}
             onPress={() => router.push("/received-items")}
           >
             <Text style={styles.viewReceivedText}>
               View Received ({currentShipment.receivedItems.length})
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
-        {/* Shipment ID Banner for sharing */}
-        <TouchableOpacity style={styles.shipmentIdBanner} onPress={handleCopyShipmentId}>
+        <Pressable
+          style={styles.shipmentIdBanner}
+          onPress={handleCopyShipmentId}
+        >
           <View style={styles.shipmentIdContent}>
-            <Text style={styles.shipmentIdLabel}>Shipment ID (tap to copy):</Text>
+            <Text style={styles.shipmentIdLabel}>
+              Shipment ID (tap to copy):
+            </Text>
             <Text style={styles.shipmentIdValue}>{currentShipment.id}</Text>
-            <Text style={styles.shipmentIdHint}>Share this with other devices to join</Text>
+            <Text style={styles.shipmentIdHint}>
+              Share this with other devices to join
+            </Text>
           </View>
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.scanSection}>
-          <TouchableOpacity
+          <Pressable
             style={styles.scanButton}
             onPress={requestCameraPermission}
           >
             <Text style={styles.scanButtonText}>📷 Scan Barcode</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={styles.searchSection}>
@@ -266,7 +294,7 @@ export default function ScanItemsScreen() {
           <View style={styles.resultsSection}>
             <Text style={styles.sectionLabel}>Search Results</Text>
             {filteredItems.map((item, index) => (
-              <TouchableOpacity
+              <Pressable
                 key={index}
                 style={[
                   styles.resultItem,
@@ -289,7 +317,7 @@ export default function ScanItemsScreen() {
                     Expected Qty: {item.qtyExpected}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
         )}
@@ -317,12 +345,12 @@ export default function ScanItemsScreen() {
                 keyboardType="numeric"
               />
 
-              <TouchableOpacity
+              <Pressable
                 style={styles.addButton}
                 onPress={handleAddReceived}
               >
                 <Text style={styles.addButtonText}>Add to Received</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         )}
@@ -334,14 +362,14 @@ export default function ScanItemsScreen() {
               <Text style={styles.noResultsText}>
                 No items found matching "{searchQuery}"
               </Text>
-              <TouchableOpacity
+              <Pressable
                 style={styles.addUnexpectedButton}
                 onPress={() => setShowUnexpectedItemForm(true)}
               >
                 <Text style={styles.addUnexpectedButtonText}>
                   + Add as Unexpected Item
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           )}
 
@@ -404,7 +432,7 @@ export default function ScanItemsScreen() {
               />
 
               <View style={styles.unexpectedButtonRow}>
-                <TouchableOpacity
+                <Pressable
                   style={styles.cancelButton}
                   onPress={() => {
                     setShowUnexpectedItemForm(false);
@@ -418,14 +446,14 @@ export default function ScanItemsScreen() {
                   }}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+                </Pressable>
 
-                <TouchableOpacity
+                <Pressable
                   style={styles.confirmButton}
                   onPress={handleAddUnexpectedItem}
                 >
                   <Text style={styles.confirmButtonText}>Add to Received</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
           </View>
@@ -449,7 +477,11 @@ export default function ScanItemsScreen() {
               <CameraView
                 style={styles.camera}
                 facing="back"
-                onBarcodeScanned={handleBarCodeScanned}
+                onBarcodeScanned={
+                  scannerActive && !isProcessingScan
+                    ? handleBarCodeScanned
+                    : undefined
+                }
                 barcodeScannerSettings={{
                   barcodeTypes: [
                     "upc_a",
@@ -465,18 +497,18 @@ export default function ScanItemsScreen() {
                 <Text style={styles.cameraInstructions}>
                   Point camera at barcode
                 </Text>
-                <TouchableOpacity
+                <Pressable
                   style={styles.closeButton}
                   onPress={() => setScannerActive(false)}
                 >
                   <Text style={styles.closeButtonText}>Close Scanner</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </>
           )}
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </Screen>
   );
 }
 

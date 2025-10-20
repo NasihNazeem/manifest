@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useAppSelector, useAppDispatch } from '../store/store';
 import { deleteShipment } from '../store/shipmentSlice';
 import { exportReceivedItems, exportDiscrepancies } from '../utils/exportUtils';
+import Screen from '../components/Screen';
 
 export default function HistoryScreen() {
   const dispatch = useAppDispatch();
@@ -47,19 +48,19 @@ export default function HistoryScreen() {
 
   if (shipments.length === 0) {
     return (
-      <View style={styles.container}>
+      <Screen style={styles.container}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No shipments yet</Text>
           <Text style={styles.emptySubtext}>
             Complete a shipment to see it appear here
           </Text>
         </View>
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {shipments.map(shipment => (
           <View key={shipment.id} style={styles.shipmentCard}>
@@ -97,33 +98,33 @@ export default function HistoryScreen() {
             </Text>
 
             <View style={styles.actionsContainer}>
-              <TouchableOpacity
+              <Pressable
                 style={[styles.actionButton, styles.exportButton]}
                 onPress={() => handleExport(shipment.id, 'all')}
               >
                 <Text style={styles.actionButtonText}>Export All</Text>
-              </TouchableOpacity>
+              </Pressable>
 
               {calculateDiscrepancyCount(shipment) > 0 && (
-                <TouchableOpacity
+                <Pressable
                   style={[styles.actionButton, styles.warningButton]}
                   onPress={() => handleExport(shipment.id, 'discrepancies')}
                 >
                   <Text style={styles.actionButtonText}>Export Discrepancies</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
 
-              <TouchableOpacity
+              <Pressable
                 style={[styles.actionButton, styles.deleteButton]}
                 onPress={() => handleDelete(shipment.id)}
               >
                 <Text style={styles.actionButtonText}>Delete</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         ))}
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 

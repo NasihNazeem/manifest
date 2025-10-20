@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
   TextInput,
 } from "react-native";
@@ -25,6 +25,7 @@ import {
 } from "../utils/exportUtils";
 import { ReceivedItem } from "../types/shipment";
 import { deleteShipmentOnServer } from "../services/syncService";
+import Screen from "../components/Screen";
 
 export default function ReceivedItemsScreen() {
   const router = useRouter();
@@ -38,11 +39,11 @@ export default function ReceivedItemsScreen() {
 
   if (!currentShipment) {
     return (
-      <View style={styles.container}>
+      <Screen style={styles.container}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No active shipment</Text>
         </View>
-      </View>
+      </Screen>
     );
   }
 
@@ -162,7 +163,7 @@ export default function ReceivedItemsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -204,37 +205,37 @@ export default function ReceivedItemsScreen() {
         <View style={styles.exportSection}>
           <Text style={styles.sectionTitle}>Export Options</Text>
           <View style={styles.exportButtons}>
-            <TouchableOpacity
+            <Pressable
               style={[styles.exportButton, styles.primaryExport]}
               onPress={() => handleExport("all")}
             >
               <Text style={styles.exportButtonText}>Export All</Text>
-            </TouchableOpacity>
+            </Pressable>
             {stats.discrepancies > 0 && (
-              <TouchableOpacity
+              <Pressable
                 style={[styles.exportButton, styles.warningExport]}
                 onPress={() => handleExport("discrepancies")}
               >
                 <Text style={styles.exportButtonText}>
                   Export Discrepancies
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {stats.overages > 0 && (
-              <TouchableOpacity
+              <Pressable
                 style={[styles.exportButton, styles.overageExport]}
                 onPress={() => handleExport("overages")}
               >
                 <Text style={styles.exportButtonText}>Export Overages</Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {stats.shortages > 0 && (
-              <TouchableOpacity
+              <Pressable
                 style={[styles.exportButton, styles.shortageExport]}
                 onPress={() => handleExport("shortages")}
               >
                 <Text style={styles.exportButtonText}>Export Shortages</Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
         </View>
@@ -248,9 +249,9 @@ export default function ReceivedItemsScreen() {
               <View key={index} style={styles.itemCard}>
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemDescription}>{item.description}</Text>
-                  <TouchableOpacity onPress={() => handleEditQuantity(item)}>
+                  <Pressable onPress={() => handleEditQuantity(item)}>
                     <Text style={styles.editText}>Edit</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
                 <Text style={styles.itemDetail}>Item: {item.itemNumber}</Text>
@@ -277,12 +278,12 @@ export default function ReceivedItemsScreen() {
                           keyboardType="numeric"
                           autoFocus
                         />
-                        <TouchableOpacity
+                        <Pressable
                           style={styles.saveButton}
                           onPress={() => handleSaveQuantity(item.upc)}
                         >
                           <Text style={styles.saveButtonText}>Save</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
                     ) : (
                       <Text style={styles.quantityValue}>
@@ -310,28 +311,28 @@ export default function ReceivedItemsScreen() {
 
       {/* Floating Action Buttons */}
       <View style={styles.fabContainer}>
-        <TouchableOpacity
+        <Pressable
           style={[styles.fab, styles.cancelFab]}
           onPress={handleCancel}
         >
           <Text style={styles.fabText}>Cancel</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           style={[styles.fab, styles.continueFab]}
           onPress={() => router.back()}
         >
           <Text style={styles.fabText}>Continue Scanning</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           style={[styles.fab, styles.completeFab]}
           onPress={handleComplete}
         >
           <Text style={styles.fabText}>Complete</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
-    </View>
+    </Screen>
   );
 }
 

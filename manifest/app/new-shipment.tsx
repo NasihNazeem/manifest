@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -20,6 +20,7 @@ import {
 } from "../utils/pdfParser";
 import { ExpectedItem } from "../types/shipment";
 import { syncShipmentToServer } from "../services/syncService";
+import Screen from "../components/Screen";
 
 export default function NewShipmentScreen() {
   const router = useRouter();
@@ -173,7 +174,7 @@ export default function NewShipmentScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -184,7 +185,7 @@ export default function NewShipmentScreen() {
           <Text style={styles.sectionTitle}>
             Step 1: Upload Purchase Order PDF
           </Text>
-          <TouchableOpacity
+          <Pressable
             style={styles.uploadButton}
             onPress={handlePickPDF}
             disabled={loading}
@@ -192,16 +193,16 @@ export default function NewShipmentScreen() {
             <Text style={styles.uploadButtonText}>
               {pdfSelected ? "PDF Selected ✓" : "Select PDF File"}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity
+          <Pressable
             style={styles.demoButton}
             onPress={handleUseDemoData}
           >
             <Text style={styles.demoButtonText}>
               Or Use Demo Data for Testing
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {loading && (
             <View style={styles.loadingContainer}>
@@ -222,22 +223,22 @@ export default function NewShipmentScreen() {
                   value={manualDocId}
                   onChangeText={setManualDocId}
                 />
-                <TouchableOpacity
+                <Pressable
                   style={styles.addButton}
                   onPress={handleAddDocumentId}
                 >
                   <Text style={styles.addButtonText}>Add</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
 
               {documentIds.map((id, index) => (
                 <View key={index} style={styles.documentIdRow}>
                   <Text style={styles.documentIdText}>{id}</Text>
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => handleRemoveDocumentId(index)}
                   >
                     <Text style={styles.removeText}>Remove</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               ))}
             </View>
@@ -247,18 +248,18 @@ export default function NewShipmentScreen() {
                 <Text style={styles.sectionTitle}>
                   Expected Items ({expectedItems.length})
                 </Text>
-                <TouchableOpacity onPress={handleAddItem}>
+                <Pressable onPress={handleAddItem}>
                   <Text style={styles.addItemText}>+ Add Item</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
 
               {expectedItems.map((item, index) => (
                 <View key={index} style={styles.itemCard}>
                   <View style={styles.itemHeader}>
                     <Text style={styles.itemNumber}>Item #{index + 1}</Text>
-                    <TouchableOpacity onPress={() => handleRemoveItem(index)}>
+                    <Pressable onPress={() => handleRemoveItem(index)}>
                       <Text style={styles.removeText}>Remove</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
 
                   <TextInput
@@ -320,17 +321,17 @@ export default function NewShipmentScreen() {
       {/* Floating Action Button - appears after PDF is parsed */}
       {pdfSelected && !loading && expectedItems.length > 0 && (
         <View style={styles.floatingButtonContainer}>
-          <TouchableOpacity
+          <Pressable
             style={styles.floatingButton}
             onPress={handleStartShipment}
           >
             <Text style={styles.floatingButtonText}>
               Start Receiving Items
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       )}
-    </View>
+    </Screen>
   );
 }
 

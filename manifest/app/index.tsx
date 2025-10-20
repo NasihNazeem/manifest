@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppSelector, useAppDispatch } from '../store/store';
 import { createShipment } from '../store/shipmentSlice';
 import { API_CONFIG } from '../config/api';
+import Screen from '../components/Screen';
 
 interface ActiveShipment {
   id: string;
@@ -101,7 +102,7 @@ export default function HomeScreen() {
   }, [showJoinForm]);
 
   return (
-    <View style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Manifest</Text>
 
@@ -121,37 +122,37 @@ export default function HomeScreen() {
               Received Items: {currentShipment.receivedItems.length}
             </Text>
 
-            <TouchableOpacity
+            <Pressable
               style={[styles.button, styles.primaryButton]}
               onPress={() => router.push('/scan-items')}
             >
               <Text style={styles.buttonText}>Continue Scanning</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               style={[styles.button, styles.secondaryButton]}
               onPress={() => router.push('/received-items')}
             >
               <Text style={styles.buttonTextSecondary}>View Received Items</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         ) : (
           <View>
-            <TouchableOpacity
+            <Pressable
               style={[styles.button, styles.primaryButton, styles.largeButton]}
               onPress={() => router.push('/new-shipment')}
             >
               <Text style={styles.buttonText}>Start New Shipment</Text>
-            </TouchableOpacity>
+            </Pressable>
 
-            <TouchableOpacity
+            <Pressable
               style={[styles.button, styles.joinButton, styles.largeButton]}
               onPress={() => setShowJoinForm(!showJoinForm)}
             >
               <Text style={styles.joinButtonText}>
                 {showJoinForm ? 'Cancel' : 'Join Existing Shipment'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
 
             {showJoinForm && (
               <View style={styles.joinForm}>
@@ -175,7 +176,7 @@ export default function HomeScreen() {
                 ) : (
                   <View style={styles.shipmentList}>
                     {activeShipments.map((shipment) => (
-                      <TouchableOpacity
+                      <Pressable
                         key={shipment.id}
                         style={styles.shipmentCard}
                         onPress={() => handleJoinShipment(shipment)}
@@ -196,12 +197,12 @@ export default function HomeScreen() {
                         <Text style={styles.shipmentIdSmall}>
                           ID: {shipment.id}
                         </Text>
-                      </TouchableOpacity>
+                      </Pressable>
                     ))}
                   </View>
                 )}
 
-                <TouchableOpacity
+                <Pressable
                   style={[styles.button, styles.secondaryButton, { marginTop: 15 }]}
                   onPress={fetchActiveShipments}
                   disabled={fetchingShipments}
@@ -209,7 +210,7 @@ export default function HomeScreen() {
                   <Text style={styles.buttonTextSecondary}>
                     {fetchingShipments ? 'Refreshing...' : 'Refresh List'}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
           </View>
@@ -224,19 +225,19 @@ export default function HomeScreen() {
               <Text style={styles.shipmentCount}>
                 {shipments.length} completed shipment{shipments.length !== 1 ? 's' : ''}
               </Text>
-              <TouchableOpacity
+              <Pressable
                 style={[styles.button, styles.secondaryButton]}
                 onPress={() => router.push('/history')}
               >
                 <Text style={styles.buttonTextSecondary}>View History</Text>
-              </TouchableOpacity>
+              </Pressable>
             </>
           ) : (
             <Text style={styles.emptyText}>No shipments yet</Text>
           )}
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
