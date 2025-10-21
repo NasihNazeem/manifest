@@ -31,9 +31,9 @@ export default function HistoryScreen() {
       ? await exportReceivedItems(shipment.receivedItems, `shipment_${shipment.date}_${shipment.id}.csv`)
       : await exportDiscrepancies(shipment.receivedItems, `discrepancies_${shipment.date}_${shipment.id}.csv`);
 
-    if (success) {
-      Alert.alert('Success', 'Export completed successfully');
-    } else {
+    // Only show error alert if export failed
+    // Don't show success alert since we can't detect if user cancelled the share dialog
+    if (!success) {
       Alert.alert('Error', 'Failed to export shipment');
     }
   };

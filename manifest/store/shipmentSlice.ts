@@ -129,11 +129,8 @@ const shipmentSlice = createSlice({
             scannedAt: Date.now(),
           };
           state.currentShipment.receivedItems.push(newReceivedItem);
-        } else {
-          console.log(
-            "[REDUX] Item not found in expectedItems either - cannot update"
-          );
         }
+        // If item not found in expectedItems, silently ignore the update
       }
     },
 

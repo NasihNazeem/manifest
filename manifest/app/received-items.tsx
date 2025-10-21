@@ -100,8 +100,25 @@ export default function ReceivedItemsScreen() {
   const handleExport = async (
     type: "all" | "discrepancies" | "overages" | "shortages"
   ) => {
-    let success = false;
     const date = currentShipment.date;
+
+    // Check if there's data to export for specific types
+    if (type === "overages" && stats.overages === 0) {
+      Alert.alert("No Overages", "There are no overages to export.");
+      return;
+    }
+
+    if (type === "shortages" && stats.shortages === 0) {
+      Alert.alert("No Shortages", "There are no shortages to export.");
+      return;
+    }
+
+    if (type === "discrepancies" && stats.discrepancies === 0) {
+      Alert.alert("No Discrepancies", "There are no discrepancies to export.");
+      return;
+    }
+
+    let success = false;
 
     switch (type) {
       case "all":
@@ -121,9 +138,9 @@ export default function ReceivedItemsScreen() {
         break;
     }
 
-    if (success) {
-      Alert.alert("Success", "Export completed successfully");
-    } else {
+    // Only show error alert if export failed
+    // Don't show success alert since we can't detect if user cancelled the share dialog
+    if (!success) {
       Alert.alert("Error", "Failed to export data");
     }
   };
@@ -239,32 +256,26 @@ export default function ReceivedItemsScreen() {
             >
               <Text style={styles.exportButtonText}>Export All</Text>
             </Pressable>
-            {stats.discrepancies > 0 && (
-              <Pressable
-                style={[styles.exportButton, styles.warningExport]}
-                onPress={() => handleExport("discrepancies")}
-              >
-                <Text style={styles.exportButtonText}>
-                  Export Discrepancies
-                </Text>
-              </Pressable>
-            )}
-            {stats.overages > 0 && (
-              <Pressable
-                style={[styles.exportButton, styles.overageExport]}
-                onPress={() => handleExport("overages")}
-              >
-                <Text style={styles.exportButtonText}>Export Overages</Text>
-              </Pressable>
-            )}
-            {stats.shortages > 0 && (
-              <Pressable
-                style={[styles.exportButton, styles.shortageExport]}
-                onPress={() => handleExport("shortages")}
-              >
-                <Text style={styles.exportButtonText}>Export Shortages</Text>
-              </Pressable>
-            )}
+            <Pressable
+              style={[styles.exportButton, styles.warningExport]}
+              onPress={() => handleExport("discrepancies")}
+            >
+              <Text style={styles.exportButtonText}>
+                Export Discrepancies
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.exportButton, styles.overageExport]}
+              onPress={() => handleExport("overages")}
+            >
+              <Text style={styles.exportButtonText}>Export Overages</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.exportButton, styles.shortageExport]}
+              onPress={() => handleExport("shortages")}
+            >
+              <Text style={styles.exportButtonText}>Export Shortages</Text>
+            </Pressable>
           </View>
         </View>
 

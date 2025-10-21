@@ -45,7 +45,13 @@ export async function exportReceivedItems(
 
     const canShare = await Sharing.isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(fileUri);
+      // Note: Expo Sharing API doesn't provide a way to detect if user cancelled the share dialog
+      // This is a known limitation (see: https://github.com/expo/expo/issues/5713)
+      // We return true if the share dialog was shown, regardless of user action
+      await Sharing.shareAsync(fileUri, {
+        UTI: 'public.comma-separated-values-text',
+        mimeType: 'text/csv',
+      });
       return true;
     } else {
       console.log("Sharing is not available on this device");
