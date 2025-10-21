@@ -155,7 +155,10 @@ export default function ReceivedItemsScreen() {
 
     // Validate: must be a valid number and >= 0
     if (isNaN(qty) || qty < 0) {
-      Alert.alert("Invalid Quantity", "Please enter a valid quantity (0 or greater)");
+      Alert.alert(
+        "Invalid Quantity",
+        "Please enter a valid quantity (0 or greater)"
+      );
       return;
     }
 
@@ -174,8 +177,8 @@ export default function ReceivedItemsScreen() {
   };
 
   const getDiscrepancyLabel = (discrepancy: number) => {
-    if (discrepancy > 0) return `+${discrepancy} Overage`;
-    if (discrepancy < 0) return `${discrepancy} Shortage`;
+    if (discrepancy > 0) return `+${discrepancy}`;
+    if (discrepancy < 0) return `${discrepancy}`;
     return "Match";
   };
 
@@ -287,53 +290,68 @@ export default function ReceivedItemsScreen() {
                 )}
                 <Text style={styles.itemDetail}>UPC: {item.upc}</Text>
 
-                <View style={styles.quantityRow}>
-                  <View style={styles.quantityBox}>
-                    <Text style={styles.quantityLabel}>Expected</Text>
-                    <Text style={styles.quantityValue}>{item.qtyExpected}</Text>
-                  </View>
-                  <View style={styles.quantityBox}>
-                    <Text style={styles.quantityLabel}>Received</Text>
-                    {editingItem === item.upc ? (
-                      <View style={styles.editContainer}>
-                        <TextInput
-                          style={styles.editInput}
-                          value={editQuantity}
-                          onChangeText={handleQuantityChange}
-                          keyboardType="numeric"
-                          autoFocus
-                        />
-                        <Pressable
-                          style={styles.cancelEditButton}
-                          onPress={handleCancelEdit}
-                        >
-                          <Text style={styles.cancelEditButtonText}>Cancel</Text>
-                        </Pressable>
-                        <Pressable
-                          style={styles.saveButton}
-                          onPress={() => handleSaveQuantity(item.upc)}
-                        >
-                          <Text style={styles.saveButtonText}>Save</Text>
-                        </Pressable>
+                {editingItem === item.upc ? (
+                  <View style={styles.editModeContainer}>
+                    <View style={styles.editInputRow}>
+                      <View style={styles.editLabelContainer}>
+                        <Text style={styles.editLabel}>
+                          Update Received Quantity:
+                        </Text>
+                        <Text style={styles.editSubLabel}>
+                          Expected: {item.qtyExpected}
+                        </Text>
                       </View>
-                    ) : (
+                      <TextInput
+                        style={styles.editInput}
+                        value={editQuantity}
+                        onChangeText={handleQuantityChange}
+                        keyboardType="numeric"
+                        autoFocus
+                        placeholder="0"
+                      />
+                    </View>
+                    <View style={styles.editButtonRow}>
+                      <Pressable
+                        style={styles.cancelEditButton}
+                        onPress={handleCancelEdit}
+                      >
+                        <Text style={styles.cancelEditButtonText}>Cancel</Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.saveButton}
+                        onPress={() => handleSaveQuantity(item.upc)}
+                      >
+                        <Text style={styles.saveButtonText}>Save Changes</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.quantityRow}>
+                    <View style={styles.quantityBox}>
+                      <Text style={styles.quantityLabel}>Expected</Text>
+                      <Text style={styles.quantityValue}>
+                        {item.qtyExpected}
+                      </Text>
+                    </View>
+                    <View style={styles.quantityBox}>
+                      <Text style={styles.quantityLabel}>Received</Text>
                       <Text style={styles.quantityValue}>
                         {item.qtyReceived}
                       </Text>
-                    )}
+                    </View>
+                    <View style={styles.quantityBox}>
+                      <Text style={styles.quantityLabel}>Discrepancy</Text>
+                      <Text
+                        style={[
+                          styles.quantityValue,
+                          getDiscrepancyStyle(item.discrepancy),
+                        ]}
+                      >
+                        {getDiscrepancyLabel(item.discrepancy)}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.quantityBox}>
-                    <Text style={styles.quantityLabel}>Discrepancy</Text>
-                    <Text
-                      style={[
-                        styles.quantityValue,
-                        getDiscrepancyStyle(item.discrepancy),
-                      ]}
-                    >
-                      {getDiscrepancyLabel(item.discrepancy)}
-                    </Text>
-                  </View>
-                </View>
+                )}
               </View>
             ))
           )}
@@ -503,15 +521,17 @@ const styles = StyleSheet.create({
   },
   quantityRow: {
     flexDirection: "row",
-    marginTop: 15,
+    marginTop: 8,
     backgroundColor: "#f9f9f9",
     borderRadius: 8,
-    padding: 10,
-    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flex: 1,
+    justifyContent: "space-between",
   },
   quantityBox: {
-    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
   },
   quantityLabel: {
     fontSize: 12,
@@ -532,42 +552,70 @@ const styles = StyleSheet.create({
   shortageText: {
     color: "#FF3B30",
   },
-  editContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
+  editModeContainer: {
+    marginTop: 15,
+    backgroundColor: "#f0f8ff",
+    borderRadius: 8,
+    padding: 15,
+    borderWidth: 2,
+    borderColor: "#007AFF",
+  },
+  editInputRow: {
+    marginBottom: 15,
+  },
+  editLabelContainer: {
+    marginBottom: 10,
+  },
+  editLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  editSubLabel: {
+    fontSize: 12,
+    color: "#666",
   },
   editInput: {
     backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    fontSize: 16,
-    width: 60,
+    borderWidth: 2,
+    borderColor: "#007AFF",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 20,
+    fontWeight: "600",
+    width: "100%",
     textAlign: "center",
   },
+  editButtonRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
   cancelEditButton: {
+    flex: 1,
     backgroundColor: "#FF3B30",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: "center",
   },
   cancelEditButtonText: {
     color: "white",
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: "600",
   },
   saveButton: {
+    flex: 1,
     backgroundColor: "#34C759",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: "center",
   },
   saveButtonText: {
     color: "white",
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: "600",
   },
   fabContainer: {
