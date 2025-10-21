@@ -52,28 +52,28 @@ export default function HomeScreen() {
         },
       });
 
-      console.log("📡 Response status:", response.status);
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log("📦 Received shipments:", result);
+      console.log("Received shipments:", result);
 
       if (result.success && result.shipments) {
         // Filter for active (in-progress) shipments only
         const active = result.shipments.filter(
           (s: ActiveShipment) => s.status === "in-progress"
         );
-        console.log("✅ Active shipments found:", active.length);
+        console.log("Active shipments found:", active.length);
         setActiveShipments(active);
       } else {
-        console.log("⚠️ No shipments in response");
+        console.log("No shipments in response");
         setActiveShipments([]);
       }
     } catch (error) {
-      console.error("❌ Error fetching active shipments:", error);
+      console.error("Error fetching active shipments:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       Alert.alert(
