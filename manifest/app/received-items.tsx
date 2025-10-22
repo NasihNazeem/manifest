@@ -26,6 +26,8 @@ import {
 import { ReceivedItem } from "../types/shipment";
 import { deleteShipmentOnServer } from "../services/syncService";
 import Screen from "../components/Screen";
+import { Colors } from "../constants/theme";
+import BackButton from "../components/BackButton";
 
 export default function ReceivedItemsScreen() {
   const router = useRouter();
@@ -233,6 +235,10 @@ export default function ReceivedItemsScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
+        <View style={styles.backButtonContainer}>
+          <BackButton />
+        </View>
+
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{stats.totalExpected}</Text>
@@ -304,6 +310,7 @@ export default function ReceivedItemsScreen() {
           <TextInput
             style={styles.searchInput}
             placeholder="Search by Item #, Legacy #, Description, UPC, or Packing List"
+            placeholderTextColor={Colors.placeholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCapitalize="none"
@@ -363,6 +370,7 @@ export default function ReceivedItemsScreen() {
                         keyboardType="numeric"
                         autoFocus
                         placeholder="0"
+                        placeholderTextColor={Colors.placeholder}
                       />
                     </View>
                     <View style={styles.editButtonRow}>
@@ -443,7 +451,7 @@ export default function ReceivedItemsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
@@ -452,6 +460,9 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingBottom: 100, // Add padding to account for FABs
   },
+  backButtonContainer: {
+    marginBottom: 15,
+  },
   statsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -459,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   statBox: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 15,
     flex: 1,
@@ -467,38 +478,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   statValue: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#007AFF",
+    color: Colors.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: "#666",
+    color: Colors.textSecondary,
     marginTop: 4,
     textAlign: "center",
   },
   warningValue: {
-    color: "#FF9500",
+    color: Colors.warning,
   },
   overageValue: {
-    color: "#34C759",
+    color: Colors.success,
   },
   shortageValue: {
-    color: "#FF3B30",
+    color: Colors.error,
   },
   exportSection: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -506,7 +517,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 15,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   exportButtons: {
     flexDirection: "row",
@@ -522,19 +533,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   primaryExport: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
   },
   warningExport: {
-    backgroundColor: "#FF9500",
+    backgroundColor: Colors.warning,
   },
   overageExport: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.success,
   },
   shortageExport: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: Colors.error,
   },
   exportButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -542,13 +553,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   itemCard: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -561,23 +572,23 @@ const styles = StyleSheet.create({
   itemDescription: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.textPrimary,
     flex: 1,
   },
   editText: {
-    color: "#007AFF",
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: "600",
   },
   itemDetail: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   quantityRow: {
     flexDirection: "row",
     marginTop: 8,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -590,30 +601,30 @@ const styles = StyleSheet.create({
   },
   quantityLabel: {
     fontSize: 12,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   quantityValue: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: Colors.textPrimary,
   },
   matchText: {
-    color: "#34C759",
+    color: Colors.success,
   },
   overageText: {
-    color: "#FF9500",
+    color: Colors.warning,
   },
   shortageText: {
-    color: "#FF3B30",
+    color: Colors.error,
   },
   editModeContainer: {
     marginTop: 15,
-    backgroundColor: "#f0f8ff",
+    backgroundColor: Colors.primaryLight,
     borderRadius: 8,
     padding: 15,
     borderWidth: 2,
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
   },
   editInputRow: {
     marginBottom: 15,
@@ -624,17 +635,17 @@ const styles = StyleSheet.create({
   editLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.textPrimary,
     marginBottom: 4,
   },
   editSubLabel: {
     fontSize: 12,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   editInput: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 2,
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -642,6 +653,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     width: "100%",
     textAlign: "center",
+    color: Colors.textPrimary,
   },
   editButtonRow: {
     flexDirection: "row",
@@ -649,27 +661,27 @@ const styles = StyleSheet.create({
   },
   cancelEditButton: {
     flex: 1,
-    backgroundColor: "#FF3B30",
+    backgroundColor: Colors.error,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
   },
   cancelEditButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "600",
   },
   saveButton: {
     flex: 1,
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.success,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
   },
   saveButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -679,16 +691,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: "row",
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     paddingTop: 10,
     paddingBottom: 40,
     paddingHorizontal: 15,
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
+    borderTopColor: Colors.divider,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 8,
   },
@@ -705,16 +717,16 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   cancelFab: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: Colors.error,
   },
   continueFab: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
   },
   completeFab: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.success,
   },
   fabText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -725,31 +737,32 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#999",
+    color: Colors.textMuted,
     textAlign: "center",
   },
   searchSection: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   searchInput: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 15,
     fontSize: 16,
+    color: Colors.textPrimary,
   },
   clearSearchButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: Colors.error,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 8,
@@ -757,7 +770,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   clearSearchText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 14,
     fontWeight: "600",
   },

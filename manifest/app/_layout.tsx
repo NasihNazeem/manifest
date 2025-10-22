@@ -4,11 +4,12 @@ import { PersistGate } from "redux-persist/integration/react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { store, persistor } from "../store/store";
 import { StatusBar } from "expo-status-bar";
+import { Colors } from "../constants/theme";
 
 function LoadingView() {
   return (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#007AFF" />
+      <ActivityIndicator size="large" color={Colors.primary} />
       <Text style={styles.loadingText}>Loading...</Text>
     </View>
   );
@@ -18,19 +19,13 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingView />} persistor={persistor}>
-        <StatusBar style="auto" />
-        <Stack>
-          <Stack.Screen name="index" options={{ title: "Manifest" }} />
-          <Stack.Screen name="history" options={{ title: "History" }} />
-          <Stack.Screen
-            name="new-shipment"
-            options={{ title: "New Shipment" }}
-          />
-          <Stack.Screen name="scan-items" options={{ title: "Scan Items" }} />
-          <Stack.Screen
-            name="received-items"
-            options={{ title: "Received Items" }}
-          />
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="history" />
+          <Stack.Screen name="new-shipment" />
+          <Stack.Screen name="scan-items" />
+          <Stack.Screen name="received-items" />
         </Stack>
       </PersistGate>
     </Provider>
@@ -42,11 +37,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: Colors.background,
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: "#666",
+    color: Colors.textSecondary,
   },
 });

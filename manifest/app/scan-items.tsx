@@ -20,6 +20,8 @@ import {
 import { ExpectedItem } from "../types/shipment";
 import { pushReceivedItem } from "../services/syncService";
 import Screen from "../components/Screen";
+import { Colors } from "../constants/theme";
+import BackButton from "../components/BackButton";
 
 export default function ScanItemsScreen() {
   const router = useRouter();
@@ -220,28 +222,30 @@ export default function ScanItemsScreen() {
 
   // Get unique document IDs for filter
   const uniqueDocumentIds = Array.from(
-    new Set(currentShipment?.expectedItems.map(item => item.documentId).filter(Boolean))
+    new Set(
+      currentShipment?.expectedItems
+        .map((item) => item.documentId)
+        .filter(Boolean)
+    )
   ).sort();
 
   const filteredItems =
-    currentShipment?.expectedItems.filter(
-      (item) => {
-        // Filter by document ID if selected
-        if (selectedDocumentId && item.documentId !== selectedDocumentId) {
-          return false;
-        }
-
-        // Filter by search query
-        return (
-          item.upc.includes(searchQuery) ||
-          item.itemNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.legacyItemNumber
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+    currentShipment?.expectedItems.filter((item) => {
+      // Filter by document ID if selected
+      if (selectedDocumentId && item.documentId !== selectedDocumentId) {
+        return false;
       }
-    ) || [];
+
+      // Filter by search query
+      return (
+        item.upc.includes(searchQuery) ||
+        item.itemNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.legacyItemNumber
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }) || [];
 
   if (!currentShipment) {
     return null;
@@ -254,16 +258,19 @@ export default function ScanItemsScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Scan or Search Items</Text>
-          <Pressable
-            style={styles.viewReceivedButton}
-            onPress={() => router.push("/received-items")}
-          >
-            <Text style={styles.viewReceivedText}>
-              View Received ({currentShipment.receivedItems.length})
-            </Text>
-          </Pressable>
+        <View style={styles.headerRow}>
+          <BackButton />
+          <View style={styles.header}>
+            <Text style={styles.title}>Scan or Search Items</Text>
+            <Pressable
+              style={styles.viewReceivedButton}
+              onPress={() => router.push("/received-items")}
+            >
+              <Text style={styles.viewReceivedText}>
+                View Received ({currentShipment.receivedItems.length})
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <Pressable
@@ -311,7 +318,8 @@ export default function ScanItemsScreen() {
                   <Text
                     style={[
                       styles.documentFilterChipText,
-                      !selectedDocumentId && styles.documentFilterChipTextActive,
+                      !selectedDocumentId &&
+                        styles.documentFilterChipTextActive,
                     ]}
                   >
                     All
@@ -322,14 +330,16 @@ export default function ScanItemsScreen() {
                     key={docId}
                     style={[
                       styles.documentFilterChip,
-                      selectedDocumentId === docId && styles.documentFilterChipActive,
+                      selectedDocumentId === docId &&
+                        styles.documentFilterChipActive,
                     ]}
                     onPress={() => handleDocumentFilterChange(docId as string)}
                   >
                     <Text
                       style={[
                         styles.documentFilterChipText,
-                        selectedDocumentId === docId && styles.documentFilterChipTextActive,
+                        selectedDocumentId === docId &&
+                          styles.documentFilterChipTextActive,
                       ]}
                     >
                       {docId}
@@ -344,6 +354,7 @@ export default function ScanItemsScreen() {
             ref={searchInputRef}
             style={styles.searchInput}
             placeholder="Search by UPC, Item #, Legacy #, or Description"
+            placeholderTextColor={Colors.placeholder}
             value={searchQuery}
             onChangeText={handleSearch}
             autoCapitalize="none"
@@ -359,8 +370,8 @@ export default function ScanItemsScreen() {
                 style={[
                   styles.resultItem,
                   selectedItem?.upc === item.upc &&
-                  selectedItem?.documentId === item.documentId &&
-                  styles.selectedResultItem,
+                    selectedItem?.documentId === item.documentId &&
+                    styles.selectedResultItem,
                 ]}
                 onPress={() => {
                   setSelectedItem(item);
@@ -411,6 +422,7 @@ export default function ScanItemsScreen() {
               <TextInput
                 style={styles.quantityInput}
                 placeholder="Enter quantity"
+                placeholderTextColor={Colors.placeholder}
                 value={quantity}
                 onChangeText={setQuantity}
                 keyboardType="numeric"
@@ -452,6 +464,7 @@ export default function ScanItemsScreen() {
               <TextInput
                 style={styles.unexpectedInput}
                 placeholder="UPC * (required)"
+                placeholderTextColor={Colors.placeholder}
                 value={unexpectedItem.upc}
                 onChangeText={(text) =>
                   setUnexpectedItem((prev) => ({ ...prev, upc: text }))
@@ -462,6 +475,7 @@ export default function ScanItemsScreen() {
               <TextInput
                 style={styles.unexpectedInput}
                 placeholder="Quantity Received * (required)"
+                placeholderTextColor={Colors.placeholder}
                 value={unexpectedItem.qtyReceived}
                 onChangeText={(text) =>
                   setUnexpectedItem((prev) => ({ ...prev, qtyReceived: text }))
@@ -472,6 +486,7 @@ export default function ScanItemsScreen() {
               <TextInput
                 style={styles.unexpectedInput}
                 placeholder="Item Number (optional)"
+                placeholderTextColor={Colors.placeholder}
                 value={unexpectedItem.itemNumber}
                 onChangeText={(text) =>
                   setUnexpectedItem((prev) => ({ ...prev, itemNumber: text }))
@@ -481,6 +496,7 @@ export default function ScanItemsScreen() {
               <TextInput
                 style={styles.unexpectedInput}
                 placeholder="Legacy Number (optional)"
+                placeholderTextColor={Colors.placeholder}
                 value={unexpectedItem.legacyItemNumber}
                 onChangeText={(text) =>
                   setUnexpectedItem((prev) => ({
@@ -493,6 +509,7 @@ export default function ScanItemsScreen() {
               <TextInput
                 style={styles.unexpectedInput}
                 placeholder="Description (optional)"
+                placeholderTextColor={Colors.placeholder}
                 value={unexpectedItem.description}
                 onChangeText={(text) =>
                   setUnexpectedItem((prev) => ({ ...prev, description: text }))
@@ -583,7 +600,7 @@ export default function ScanItemsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
@@ -591,55 +608,61 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 20,
+  },
   header: {
+    flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: Colors.textPrimary,
   },
   viewReceivedButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
   },
   viewReceivedText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 14,
     fontWeight: "600",
   },
   shipmentIdBanner: {
-    backgroundColor: "#E3F2FD",
+    backgroundColor: Colors.primaryLight,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: "#2196F3",
+    borderColor: Colors.primary,
   },
   shipmentIdContent: {
     alignItems: "center",
   },
   shipmentIdLabel: {
     fontSize: 12,
-    color: "#1976D2",
+    color: Colors.textLight,
     fontWeight: "600",
     marginBottom: 5,
   },
   shipmentIdValue: {
     fontSize: 18,
-    color: "#0D47A1",
+    color: Colors.textLight,
     fontWeight: "bold",
     marginBottom: 5,
     fontFamily: "monospace",
   },
   shipmentIdHint: {
     fontSize: 11,
-    color: "#1976D2",
+    color: Colors.textMuted,
     fontStyle: "italic",
   },
   scanSection: {
@@ -663,7 +686,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   filterSection: {
     marginBottom: 12,
@@ -672,13 +695,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 8,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   documentFilterScroll: {
     marginBottom: 8,
   },
   documentFilterChip: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.surface,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -687,31 +710,32 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   documentFilterChipActive: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   documentFilterChipText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
+    color: Colors.textSecondary,
   },
   documentFilterChipTextActive: {
-    color: "white",
+    color: Colors.textLight,
   },
   searchInput: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 15,
     fontSize: 16,
+    color: Colors.textPrimary,
   },
   resultsSection: {
     marginBottom: 20,
   },
   resultItem: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
@@ -719,7 +743,7 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   selectedResultItem: {
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
   },
   resultInfo: {
     flex: 1,
@@ -727,14 +751,14 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.textPrimary,
     marginBottom: 6,
   },
   resultDocumentId: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#007AFF",
-    backgroundColor: "#E3F2FD",
+    color: Colors.textLight,
+    backgroundColor: Colors.primaryLight,
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: 4,
@@ -743,28 +767,28 @@ const styles = StyleSheet.create({
   },
   resultDetail: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 2,
   },
   quantitySection: {
     marginBottom: 20,
   },
   selectedItemCard: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
     borderWidth: 2,
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
   },
   selectedItemTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: Colors.textPrimary,
     marginBottom: 8,
   },
   selectedItemDetail: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   quantityLabel: {
@@ -772,26 +796,27 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 15,
     marginBottom: 8,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   quantityInput: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 15,
     fontSize: 18,
     marginBottom: 15,
+    color: Colors.textPrimary,
   },
   addButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.success,
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
   },
   addButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -801,18 +826,18 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
     fontSize: 16,
-    color: "#999",
+    color: Colors.textMuted,
     textAlign: "center",
     marginBottom: 15,
   },
   addUnexpectedButton: {
-    backgroundColor: "#FF9500",
+    backgroundColor: Colors.warning,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
   addUnexpectedButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -820,28 +845,29 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   unexpectedItemCard: {
-    backgroundColor: "#FFF5E6",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
     borderWidth: 2,
-    borderColor: "#FF9500",
+    borderColor: Colors.warning,
   },
   unexpectedItemHint: {
     fontSize: 14,
-    color: "#FF9500",
+    color: Colors.warning,
     marginBottom: 15,
     fontWeight: "600",
     textAlign: "center",
   },
   unexpectedInput: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 15,
     fontSize: 16,
     marginBottom: 12,
+    color: Colors.textPrimary,
   },
   unexpectedButtonRow: {
     flexDirection: "row",
@@ -850,25 +876,25 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: Colors.surface,
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
   },
   cancelButtonText: {
-    color: "#666",
+    color: Colors.textSecondary,
     fontSize: 16,
     fontWeight: "600",
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: "#FF9500",
+    backgroundColor: Colors.warning,
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
   },
   confirmButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -895,13 +921,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   closeButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: Colors.error,
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,
   },
   closeButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "600",
   },

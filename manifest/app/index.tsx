@@ -14,6 +14,7 @@ import { useAppSelector, useAppDispatch } from "../store/store";
 import { createShipment } from "../store/shipmentSlice";
 import { API_CONFIG } from "../config/api";
 import Screen from "../components/Screen";
+import { Colors } from "../constants/theme";
 
 interface ActiveShipment {
   id: string;
@@ -182,7 +183,7 @@ export default function HomeScreen() {
 
                 {fetchingShipments ? (
                   <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#007AFF" />
+                    <ActivityIndicator size="large" color={Colors.primary} />
                     <Text style={styles.loadingText}>
                       Loading active shipments...
                     </Text>
@@ -274,7 +275,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
@@ -287,29 +288,29 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 30,
     textAlign: "center",
-    color: "#333",
+    color: Colors.secondary,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "600",
     marginBottom: 15,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   activeShipmentContainer: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   shipmentInfo: {
     fontSize: 16,
     marginBottom: 8,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   button: {
     paddingVertical: 15,
@@ -322,66 +323,66 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   primaryButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
   },
   secondaryButton: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
   },
   buttonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "600",
   },
   buttonTextSecondary: {
-    color: "#007AFF",
+    color: Colors.primary,
     fontSize: 16,
     fontWeight: "600",
   },
   divider: {
     height: 1,
-    backgroundColor: "#ddd",
+    backgroundColor: Colors.divider,
     marginVertical: 30,
   },
   historySection: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   shipmentCount: {
     fontSize: 16,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 15,
   },
   emptyText: {
     fontSize: 16,
-    color: "#999",
+    color: Colors.textMuted,
     fontStyle: "italic",
   },
   joinButton: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderWidth: 2,
-    borderColor: "#34C759",
+    borderColor: Colors.success,
   },
   joinButtonText: {
-    color: "#34C759",
+    color: Colors.success,
     fontSize: 16,
     fontWeight: "600",
   },
   joinForm: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 20,
     marginTop: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -389,11 +390,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 8,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   joinFormHint: {
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 15,
   },
   loadingContainer: {
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   emptyContainer: {
     padding: 20,
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
   },
   emptyHint: {
     fontSize: 13,
-    color: "#999",
+    color: Colors.textMuted,
     marginTop: 8,
     textAlign: "center",
   },
@@ -419,12 +420,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   shipmentCard: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
   },
   shipmentCardHeader: {
     flexDirection: "row",
@@ -435,22 +436,22 @@ const styles = StyleSheet.create({
   shipmentDate: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.textPrimary,
   },
   statusBadge: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.success,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   statusText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 12,
     fontWeight: "600",
   },
   shipmentIdSmall: {
     fontSize: 11,
-    color: "#999",
+    color: Colors.textMuted,
     marginTop: 5,
     fontFamily: "monospace",
   },
