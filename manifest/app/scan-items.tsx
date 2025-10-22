@@ -32,6 +32,7 @@ export default function ScanItemsScreen() {
   const [scannerActive, setScannerActive] = useState(false);
   const [isProcessingScan, setIsProcessingScan] = useState(false);
   const isProcessingScanRef = useRef(false);
+  const searchInputRef = useRef<TextInput>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDocumentId, setSelectedDocumentId] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<ExpectedItem | null>(null);
@@ -88,6 +89,8 @@ export default function ScanItemsScreen() {
     if (item) {
       // Just populate search field, don't auto-select
       setSearchQuery(data);
+      // Blur the search input to dismiss keyboard
+      searchInputRef.current?.blur();
       setTimeout(() => {
         isProcessingScanRef.current = false;
         setIsProcessingScan(false);
@@ -337,6 +340,7 @@ export default function ScanItemsScreen() {
           )}
 
           <TextInput
+            ref={searchInputRef}
             style={styles.searchInput}
             placeholder="Search by UPC, Item #, Legacy #, or Description"
             value={searchQuery}
@@ -355,7 +359,11 @@ export default function ScanItemsScreen() {
                   styles.resultItem,
                   selectedItem?.upc === item.upc && styles.selectedResultItem,
                 ]}
-                onPress={() => setSelectedItem(item)}
+                onPress={() => {
+                  setSelectedItem(item);
+                  // Blur search input to dismiss keyboard
+                  searchInputRef.current?.blur();
+                }}
               >
                 <View style={styles.resultInfo}>
                   <Text style={styles.resultTitle}>{item.description}</Text>
