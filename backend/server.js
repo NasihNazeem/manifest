@@ -206,10 +206,9 @@ function extractItems(text) {
 }
 
 /**
- * Extract packing list numbers from text
+ * Extract packing list number from a single page's text
  */
-function extractPackingListNumbers(text) {
-  const packingLists = [];
+function extractPackingListNumber(text) {
   const lines = text.split("\n");
 
   for (let i = 0; i < lines.length; i++) {
@@ -218,19 +217,20 @@ function extractPackingListNumbers(text) {
     if (line.includes("Packing List")) {
       const sameLine = line.match(/Packing List\s+(\d+)/);
       if (sameLine) {
-        packingLists.push(sameLine[1]);
+        return sameLine[1];
       } else if (i + 1 < lines.length) {
         const nextLine = lines[i + 1].trim();
         const nextLineMatch = nextLine.match(/^(\d{8})$/);
         if (nextLineMatch) {
-          packingLists.push(nextLineMatch[1]);
+          return nextLineMatch[1];
         }
       }
     }
   }
 
-  return [...new Set(packingLists)];
+  return null;
 }
+
 
 // Health check endpoint
 app.get("/", (req, res) => {
@@ -271,9 +271,70 @@ app.post("/api/parse-pdf", pdfLimiter, upload.single("file"), async (req, res) =
     // Parse PDF
     const data = await pdfParse(pdfBuffer);
 
-    // Extract packing list numbers and items
-    const packingLists = extractPackingListNumbers(data.text);
-    const items = extractItems(data.text);
+    console.log('📄 PDF parsed:', {
+      numPages: data.numpages,
+      textLength: data.text.length,
+      firstChars: data.text.substring(0, 500)
+    });
+
+    // Parse page-by-page to associate items with document IDs
+    const allItems = [];
+    const packingListsSet = new Set();
+
+    // Split text by page breaks (pdf-parse concatenates all pages)
+    // We'll use a heuristic: "Packing List" typically appears at the start of each page
+    const pageTexts = [];
+    const lines = data.text.split('\n');
+    let currentPageText = [];
+
+    console.log('📝 Total lines:', lines.length);
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Detect new page by "Packing List" header
+      if (line.includes('Packing List') && currentPageText.length > 0) {
+        console.log('📑 New page detected at line', i);
+        pageTexts.push(currentPageText.join('\n'));
+        currentPageText = [line];
+      } else {
+        currentPageText.push(line);
+      }
+    }
+    // Add last page
+    if (currentPageText.length > 0) {
+      pageTexts.push(currentPageText.join('\n'));
+    }
+
+    console.log('📚 Split into pages:', pageTexts.length);
+
+    // Process each page
+    for (let pageIndex = 0; pageIndex < pageTexts.length; pageIndex++) {
+      const pageText = pageTexts[pageIndex];
+      const documentId = extractPackingListNumber(pageText);
+      const pageItems = extractItems(pageText);
+
+      console.log(`📄 Page ${pageIndex + 1}:`, {
+        documentId,
+        itemCount: pageItems.length,
+        preview: pageText.substring(0, 200)
+      });
+
+      // Add documentId to each item from this page
+      pageItems.forEach(item => {
+        item.documentId = documentId;
+        allItems.push(item);
+        if (documentId) {
+          packingListsSet.add(documentId);
+        }
+      });
+    }
+
+    const packingLists = Array.from(packingListsSet);
+    console.log('✅ Parsing complete:', {
+      packingLists,
+      totalItems: allItems.length
+    });
 
     res.json({
       success: true,
@@ -283,11 +344,11 @@ app.post("/api/parse-pdf", pdfLimiter, upload.single("file"), async (req, res) =
           numPages: data.numpages,
           textLength: data.text.length,
           totalPackingLists: packingLists.length,
-          totalItems: items.length,
-          totalQuantity: items.reduce((sum, item) => sum + item.qtyShipped, 0),
+          totalItems: allItems.length,
+          totalQuantity: allItems.reduce((sum, item) => sum + item.qtyShipped, 0),
         },
         packingLists: packingLists,
-        expectedItems: items,
+        expectedItems: allItems,
       },
     });
   } catch (error) {

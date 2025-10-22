@@ -36,64 +36,6 @@ const shipmentSlice = createSlice({
       state.currentShipment = newShipment;
     },
 
-    addReceivedItem: (
-      state,
-      action: PayloadAction<{
-        upc: string;
-        qtyReceived: number;
-        deviceId?: string;
-      }>
-    ) => {
-      if (!state.currentShipment) return;
-
-      const { upc, qtyReceived, deviceId } = action.payload;
-      const expectedItem = state.currentShipment.expectedItems.find(
-        (item) => item.upc === upc
-      );
-
-      // Check if item already received
-      const existingIndex = state.currentShipment.receivedItems.findIndex(
-        (item) => item.upc === upc
-      );
-
-      if (existingIndex !== -1) {
-        // Update existing received item
-        const existingItem = state.currentShipment.receivedItems[existingIndex];
-        existingItem.qtyReceived += qtyReceived;
-        existingItem.discrepancy =
-          existingItem.qtyReceived - existingItem.qtyExpected;
-        // Keep the first device that scanned it
-      } else {
-        // Add new received item
-        const receivedItem: ReceivedItem = expectedItem
-          ? {
-              // Item was expected
-              itemNumber: expectedItem.itemNumber,
-              legacyItemNumber: expectedItem.legacyItemNumber,
-              description: expectedItem.description,
-              upc: expectedItem.upc,
-              qtyReceived,
-              qtyExpected: expectedItem.qtyExpected,
-              discrepancy: qtyReceived - expectedItem.qtyExpected,
-              scannedByDevice: deviceId,
-              scannedAt: Date.now(),
-            }
-          : {
-              // Unexpected item (not in manifest) - overage
-              itemNumber: "",
-              legacyItemNumber: undefined,
-              description: "Unexpected Item",
-              upc: upc,
-              qtyReceived,
-              qtyExpected: 0,
-              discrepancy: qtyReceived, // All unexpected items are overages
-              scannedByDevice: deviceId,
-              scannedAt: Date.now(),
-            };
-        state.currentShipment.receivedItems.push(receivedItem);
-      }
-    },
-
     // Add expected received item (item in manifest)
     addExpectedReceivedItem: (
       state,
@@ -132,6 +74,7 @@ const shipmentSlice = createSlice({
           qtyReceived,
           qtyExpected: expectedItem.qtyExpected,
           discrepancy: qtyReceived - expectedItem.qtyExpected,
+          documentId: expectedItem.documentId, // Preserve document ID from expected item
           scannedByDevice: deviceId,
           scannedAt: Date.now(),
         };
@@ -228,6 +171,7 @@ const shipmentSlice = createSlice({
             qtyReceived: qtyReceived,
             qtyExpected: expectedItem.qtyExpected,
             discrepancy: qtyReceived - expectedItem.qtyExpected,
+            documentId: expectedItem.documentId, // Preserve document ID
             scannedAt: Date.now(),
           };
           state.currentShipment.receivedItems.push(newReceivedItem);
@@ -249,87 +193,20 @@ const shipmentSlice = createSlice({
       state.currentShipment = null;
     },
 
-    loadShipment: (state, action: PayloadAction<string>) => {
-      const shipment = state.shipments.find((s) => s.id === action.payload);
-      if (shipment) {
-        state.currentShipment = { ...shipment };
-      }
-    },
-
     deleteShipment: (state, action: PayloadAction<string>) => {
       state.shipments = state.shipments.filter((s) => s.id !== action.payload);
-    },
-
-    // Sync action: merge received items from server
-    mergeReceivedItems: (
-      state,
-      action: PayloadAction<{
-        shipmentId: string;
-        serverItems: Array<{ upc: string; qtyReceived: number }>;
-      }>
-    ) => {
-      if (
-        !state.currentShipment ||
-        state.currentShipment.id !== action.payload.shipmentId
-      )
-        return;
-
-      const { serverItems } = action.payload;
-
-      serverItems.forEach((serverItem) => {
-        const expectedItem = state.currentShipment!.expectedItems.find(
-          (item) => item.upc === serverItem.upc
-        );
-        const existingIndex = state.currentShipment!.receivedItems.findIndex(
-          (item) => item.upc === serverItem.upc
-        );
-
-        if (existingIndex !== -1) {
-          // Update existing item - use server quantity as source of truth
-          const existingItem =
-            state.currentShipment!.receivedItems[existingIndex];
-          existingItem.qtyReceived = serverItem.qtyReceived;
-          existingItem.discrepancy =
-            serverItem.qtyReceived - existingItem.qtyExpected;
-        } else {
-          // Add new item from server
-          const receivedItem: ReceivedItem = expectedItem
-            ? {
-                itemNumber: expectedItem.itemNumber,
-                legacyItemNumber: expectedItem.legacyItemNumber,
-                description: expectedItem.description,
-                upc: expectedItem.upc,
-                qtyReceived: serverItem.qtyReceived,
-                qtyExpected: expectedItem.qtyExpected,
-                discrepancy: serverItem.qtyReceived - expectedItem.qtyExpected,
-              }
-            : {
-                itemNumber: "",
-                legacyItemNumber: undefined,
-                description: "Unexpected Item",
-                upc: serverItem.upc,
-                qtyReceived: serverItem.qtyReceived,
-                qtyExpected: 0,
-                discrepancy: serverItem.qtyReceived,
-              };
-          state.currentShipment!.receivedItems.push(receivedItem);
-        }
-      });
     },
   },
 });
 
 export const {
   createShipment,
-  addReceivedItem,
   addExpectedReceivedItem,
   addUnexpectedReceivedItem,
   updateReceivedItemQuantity,
   completeShipment,
   cancelShipment,
-  loadShipment,
   deleteShipment,
-  mergeReceivedItems,
 } = shipmentSlice.actions;
 
 /**

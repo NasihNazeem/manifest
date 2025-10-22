@@ -64,6 +64,7 @@ export async function parsePdfFile(uri: string): Promise<{
     }
 
     const result = await response.json();
+    console.log('📦 Parse PDF Result:', JSON.stringify(result, null, 2));
 
     if (!result.success) {
       throw new Error(result.message || "Failed to parse PDF");
@@ -76,7 +77,11 @@ export async function parsePdfFile(uri: string): Promise<{
       description: item.description,
       upc: item.upc,
       qtyExpected: item.qtyShipped, // Backend uses qtyShipped, frontend expects qtyExpected
+      documentId: item.documentId, // Include document ID from page-by-page parsing
     }));
+
+    console.log('✅ Parsed Items:', expectedItems.length);
+    console.log('📄 Document IDs:', result.data.packingLists);
 
     return {
       documentIds: result.data.packingLists || [],
@@ -97,6 +102,10 @@ export async function parsePdfFile(uri: string): Promise<{
  * Allows users to test the app without PDF parsing backend
  */
 export function createMockExpectedItems(): ExpectedItem[] {
+  const timestamp = Date.now().toString().slice(-6);
+  const doc1 = `12345${timestamp.slice(0, 3)}`;
+  const doc2 = `12345${timestamp.slice(3, 6)}`;
+
   return [
     {
       itemNumber: "ITEM-001",
@@ -104,6 +113,7 @@ export function createMockExpectedItems(): ExpectedItem[] {
       description: "Wireless Mouse - Black",
       upc: "012345678901",
       qtyExpected: 100,
+      documentId: doc1,
     },
     {
       itemNumber: "ITEM-002",
@@ -111,6 +121,7 @@ export function createMockExpectedItems(): ExpectedItem[] {
       description: "USB-C Cable 6ft",
       upc: "012345678902",
       qtyExpected: 200,
+      documentId: doc1,
     },
     {
       itemNumber: "ITEM-003",
@@ -118,12 +129,14 @@ export function createMockExpectedItems(): ExpectedItem[] {
       description: "Keyboard Wireless RGB",
       upc: "012345678903",
       qtyExpected: 75,
+      documentId: doc1,
     },
     {
       itemNumber: "ITEM-004",
       description: "Laptop Stand Aluminum",
       upc: "012345678904",
       qtyExpected: 50,
+      documentId: doc2,
     },
     {
       itemNumber: "ITEM-005",
@@ -131,12 +144,14 @@ export function createMockExpectedItems(): ExpectedItem[] {
       description: "Webcam HD 1080p",
       upc: "012345678905",
       qtyExpected: 150,
+      documentId: doc2,
     },
     {
       itemNumber: "ITEM-006",
       description: 'Monitor 27" 4K',
       upc: "012345678906",
       qtyExpected: 30,
+      documentId: doc2,
     },
     {
       itemNumber: "ITEM-007",
@@ -144,12 +159,14 @@ export function createMockExpectedItems(): ExpectedItem[] {
       description: "Desk Lamp LED",
       upc: "012345678907",
       qtyExpected: 120,
+      documentId: doc2,
     },
     {
       itemNumber: "ITEM-008",
       description: "Phone Charger Fast 20W",
       upc: "012345678908",
       qtyExpected: 300,
+      documentId: doc2,
     },
   ];
 }

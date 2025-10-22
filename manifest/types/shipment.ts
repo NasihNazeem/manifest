@@ -4,6 +4,7 @@ export interface ExpectedItem {
   description: string;
   upc: string;
   qtyExpected: number;
+  documentId?: string; // Packing list number from the page this item was on
 }
 
 export interface ReceivedItem {
@@ -14,6 +15,7 @@ export interface ReceivedItem {
   qtyReceived: number;
   qtyExpected: number;
   discrepancy: number;
+  documentId?: string; // Packing list number (inherited from ExpectedItem)
   scannedByDevice?: string; // Device ID that scanned this item
   scannedAt?: number; // Timestamp when scanned
 }

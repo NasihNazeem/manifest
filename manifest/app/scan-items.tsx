@@ -33,6 +33,7 @@ export default function ScanItemsScreen() {
   const [isProcessingScan, setIsProcessingScan] = useState(false);
   const isProcessingScanRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>("");
   const [selectedItem, setSelectedItem] = useState<ExpectedItem | null>(null);
   const [quantity, setQuantity] = useState("");
   const [showUnexpectedItemForm, setShowUnexpectedItemForm] = useState(false);
@@ -224,15 +225,29 @@ export default function ScanItemsScreen() {
     setSearchQuery("");
   };
 
+  // Get unique document IDs for filter
+  const uniqueDocumentIds = Array.from(
+    new Set(currentShipment?.expectedItems.map(item => item.documentId).filter(Boolean))
+  ).sort();
+
   const filteredItems =
     currentShipment?.expectedItems.filter(
-      (item) =>
-        item.upc.includes(searchQuery) ||
-        item.itemNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.legacyItemNumber
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (item) => {
+        // Filter by document ID if selected
+        if (selectedDocumentId && item.documentId !== selectedDocumentId) {
+          return false;
+        }
+
+        // Filter by search query
+        return (
+          item.upc.includes(searchQuery) ||
+          item.itemNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.legacyItemNumber
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
     ) || [];
 
   if (!currentShipment) {
@@ -284,6 +299,54 @@ export default function ScanItemsScreen() {
 
         <View style={styles.searchSection}>
           <Text style={styles.sectionLabel}>Or Search Manually</Text>
+
+          {uniqueDocumentIds.length > 0 && (
+            <View style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Filter by Packing List:</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.documentFilterScroll}
+              >
+                <Pressable
+                  style={[
+                    styles.documentFilterChip,
+                    !selectedDocumentId && styles.documentFilterChipActive,
+                  ]}
+                  onPress={() => setSelectedDocumentId("")}
+                >
+                  <Text
+                    style={[
+                      styles.documentFilterChipText,
+                      !selectedDocumentId && styles.documentFilterChipTextActive,
+                    ]}
+                  >
+                    All
+                  </Text>
+                </Pressable>
+                {uniqueDocumentIds.map((docId) => (
+                  <Pressable
+                    key={docId}
+                    style={[
+                      styles.documentFilterChip,
+                      selectedDocumentId === docId && styles.documentFilterChipActive,
+                    ]}
+                    onPress={() => setSelectedDocumentId(docId as string)}
+                  >
+                    <Text
+                      style={[
+                        styles.documentFilterChipText,
+                        selectedDocumentId === docId && styles.documentFilterChipTextActive,
+                      ]}
+                    >
+                      {docId}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <TextInput
             style={styles.searchInput}
             placeholder="Search by UPC, Item #, Legacy #, or Description"
@@ -307,6 +370,11 @@ export default function ScanItemsScreen() {
               >
                 <View style={styles.resultInfo}>
                   <Text style={styles.resultTitle}>{item.description}</Text>
+                  {item.documentId && (
+                    <Text style={styles.resultDocumentId}>
+                      Packing List: {item.documentId}
+                    </Text>
+                  )}
                   <Text style={styles.resultDetail}>
                     Item: {item.itemNumber}
                   </Text>
@@ -597,6 +665,39 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#333",
   },
+  filterSection: {
+    marginBottom: 12,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: "#666",
+  },
+  documentFilterScroll: {
+    marginBottom: 8,
+  },
+  documentFilterChip: {
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  documentFilterChipActive: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  documentFilterChipText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+  },
+  documentFilterChipTextActive: {
+    color: "white",
+  },
   searchInput: {
     backgroundColor: "white",
     borderWidth: 1,
@@ -628,6 +729,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     marginBottom: 6,
+  },
+  resultDocumentId: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#007AFF",
+    backgroundColor: "#E3F2FD",
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginBottom: 6,
+    alignSelf: "flex-start",
   },
   resultDetail: {
     fontSize: 14,

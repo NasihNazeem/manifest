@@ -29,7 +29,6 @@ export default function NewShipmentScreen() {
   const [pdfSelected, setPdfSelected] = useState(false);
   const [expectedItems, setExpectedItems] = useState<ExpectedItem[]>([]);
   const [documentIds, setDocumentIds] = useState<string[]>([]);
-  const [manualDocId, setManualDocId] = useState("");
 
   const handlePickPDF = async () => {
     try {
@@ -86,17 +85,6 @@ export default function NewShipmentScreen() {
     }
   };
 
-  const handleAddDocumentId = () => {
-    if (manualDocId.trim()) {
-      setDocumentIds([...documentIds, manualDocId.trim()]);
-      setManualDocId("");
-    }
-  };
-
-  const handleRemoveDocumentId = (index: number) => {
-    setDocumentIds(documentIds.filter((_, i) => i !== index));
-  };
-
   const handleAddItem = () => {
     const newItem: ExpectedItem = {
       itemNumber: "",
@@ -148,18 +136,18 @@ export default function NewShipmentScreen() {
     const shipmentId = Date.now().toString();
     const shipmentData = {
       id: shipmentId,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split("T")[0],
       documentIds,
       expectedItems,
-      status: 'in-progress' as const,
+      status: "in-progress" as const,
       createdAt: Date.now(),
     };
 
     dispatch(createShipment({ documentIds, expectedItems }));
 
     // Sync to server in background (don't block user)
-    syncShipmentToServer(shipmentId, shipmentData).catch(error => {
-      console.error('Failed to sync shipment to server:', error);
+    syncShipmentToServer(shipmentId, shipmentData).catch((error) => {
+      console.error("Failed to sync shipment to server:", error);
       // Shipment still works locally even if sync fails
     });
 
@@ -195,10 +183,7 @@ export default function NewShipmentScreen() {
             </Text>
           </Pressable>
 
-          <Pressable
-            style={styles.demoButton}
-            onPress={handleUseDemoData}
-          >
+          <Pressable style={styles.demoButton} onPress={handleUseDemoData}>
             <Text style={styles.demoButtonText}>
               Or Use Demo Data for Testing
             </Text>
@@ -214,34 +199,18 @@ export default function NewShipmentScreen() {
 
         {pdfSelected && !loading && (
           <>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Document IDs</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter Document ID"
-                  value={manualDocId}
-                  onChangeText={setManualDocId}
-                />
-                <Pressable
-                  style={styles.addButton}
-                  onPress={handleAddDocumentId}
-                >
-                  <Text style={styles.addButtonText}>Add</Text>
-                </Pressable>
+            {documentIds.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  Packing Lists Found ({documentIds.length})
+                </Text>
+                {documentIds.map((id, index) => (
+                  <View key={index} style={styles.documentIdRow}>
+                    <Text style={styles.documentIdText}>{id}</Text>
+                  </View>
+                ))}
               </View>
-
-              {documentIds.map((id, index) => (
-                <View key={index} style={styles.documentIdRow}>
-                  <Text style={styles.documentIdText}>{id}</Text>
-                  <Pressable
-                    onPress={() => handleRemoveDocumentId(index)}
-                  >
-                    <Text style={styles.removeText}>Remove</Text>
-                  </Pressable>
-                </View>
-              ))}
-            </View>
+            )}
 
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -261,6 +230,14 @@ export default function NewShipmentScreen() {
                       <Text style={styles.removeText}>Remove</Text>
                     </Pressable>
                   </View>
+
+                  {item.documentId && (
+                    <View style={styles.documentIdBadge}>
+                      <Text style={styles.documentIdBadgeText}>
+                        Packing List: {item.documentId}
+                      </Text>
+                    </View>
+                  )}
 
                   <TextInput
                     style={styles.itemInput}
@@ -325,9 +302,7 @@ export default function NewShipmentScreen() {
             style={styles.floatingButton}
             onPress={handleStartShipment}
           >
-            <Text style={styles.floatingButtonText}>
-              Start Receiving Items
-            </Text>
+            <Text style={styles.floatingButtonText}>Start Receiving Items</Text>
           </Pressable>
         </View>
       )}
@@ -475,6 +450,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#666",
+  },
+  documentIdBadge: {
+    backgroundColor: "#E3F2FD",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#2196F3",
+  },
+  documentIdBadgeText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1976D2",
   },
   itemInput: {
     backgroundColor: "white",
