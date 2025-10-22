@@ -86,7 +86,7 @@ export default function ScanItemsScreen() {
     );
 
     if (item) {
-      setSelectedItem(item);
+      // Just populate search field, don't auto-select
       setSearchQuery(data);
       setTimeout(() => {
         isProcessingScanRef.current = false;
@@ -127,25 +127,14 @@ export default function ScanItemsScreen() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    // Don't auto-select - user must manually select from results
+    setSelectedItem(null);
+  };
 
-    if (!query.trim()) {
-      setSelectedItem(null);
-      return;
-    }
-
-    const item = currentShipment?.expectedItems.find(
-      (item) =>
-        item.upc.includes(query) ||
-        item.itemNumber.toLowerCase().includes(query.toLowerCase()) ||
-        item.legacyItemNumber?.toLowerCase().includes(query.toLowerCase()) ||
-        item.description.toLowerCase().includes(query.toLowerCase())
-    );
-
-    if (item) {
-      setSelectedItem(item);
-    } else {
-      setSelectedItem(null);
-    }
+  const handleDocumentFilterChange = (docId: string) => {
+    setSelectedDocumentId(docId);
+    // Clear selected item when filter changes
+    setSelectedItem(null);
   };
 
   const handleAddReceived = async () => {
@@ -313,7 +302,7 @@ export default function ScanItemsScreen() {
                     styles.documentFilterChip,
                     !selectedDocumentId && styles.documentFilterChipActive,
                   ]}
-                  onPress={() => setSelectedDocumentId("")}
+                  onPress={() => handleDocumentFilterChange("")}
                 >
                   <Text
                     style={[
@@ -331,7 +320,7 @@ export default function ScanItemsScreen() {
                       styles.documentFilterChip,
                       selectedDocumentId === docId && styles.documentFilterChipActive,
                     ]}
-                    onPress={() => setSelectedDocumentId(docId as string)}
+                    onPress={() => handleDocumentFilterChange(docId as string)}
                   >
                     <Text
                       style={[
