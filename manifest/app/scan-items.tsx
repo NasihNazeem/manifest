@@ -155,6 +155,7 @@ export default function ScanItemsScreen() {
     dispatch(
       addExpectedReceivedItem({
         upc: selectedItem.upc,
+        documentId: selectedItem.documentId, // Include documentId for unique identification
         qtyReceived: qty,
       })
     );
@@ -357,7 +358,9 @@ export default function ScanItemsScreen() {
                 key={index}
                 style={[
                   styles.resultItem,
-                  selectedItem?.upc === item.upc && styles.selectedResultItem,
+                  selectedItem?.upc === item.upc &&
+                  selectedItem?.documentId === item.documentId &&
+                  styles.selectedResultItem,
                 ]}
                 onPress={() => {
                   setSelectedItem(item);

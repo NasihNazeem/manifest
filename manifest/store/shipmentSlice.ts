@@ -43,19 +43,21 @@ const shipmentSlice = createSlice({
     ) => {
       if (!state.currentShipment) return;
 
-      const { upc, qtyReceived, deviceId } = action.payload;
+      const { upc, documentId, qtyReceived, deviceId } = action.payload;
+
+      // Find expected item using BOTH upc AND documentId for unique identification
       const expectedItem = state.currentShipment.expectedItems.find(
-        (item) => item.upc === upc
+        (item) => item.upc === upc && item.documentId === documentId
       );
 
       if (!expectedItem) {
-        console.warn(`Expected item with UPC ${upc} not found in manifest`);
+        console.warn(`Expected item with UPC ${upc} and documentId ${documentId} not found in manifest`);
         return;
       }
 
-      // Check if item already received
+      // Check if this specific item (upc + documentId) already received
       const existingIndex = state.currentShipment.receivedItems.findIndex(
-        (item) => item.upc === upc
+        (item) => item.upc === upc && item.documentId === documentId
       );
 
       if (existingIndex !== -1) {
@@ -139,15 +141,17 @@ const shipmentSlice = createSlice({
 
     updateReceivedItemQuantity: (
       state,
-      action: PayloadAction<{ upc: string; qtyReceived: number }>
+      action: PayloadAction<{ upc: string; documentId?: string; qtyReceived: number }>
     ) => {
       if (!state.currentShipment) {
         return;
       }
 
-      const { upc, qtyReceived } = action.payload;
+      const { upc, documentId, qtyReceived } = action.payload;
+
+      // Find item using composite key (upc + documentId)
       const receivedItemIndex = state.currentShipment.receivedItems.findIndex(
-        (item) => item.upc === upc
+        (item) => item.upc === upc && item.documentId === documentId
       );
 
       if (receivedItemIndex !== -1) {
@@ -158,7 +162,7 @@ const shipmentSlice = createSlice({
       } else {
         // Item doesn't exist in receivedItems yet - check if it's in expectedItems
         const expectedItem = state.currentShipment.expectedItems.find(
-          (item) => item.upc === upc
+          (item) => item.upc === upc && item.documentId === documentId
         );
 
         if (expectedItem) {
@@ -227,9 +231,10 @@ export const selectAllItemsWithStatus = createSelector(
     const allItems: ReceivedItem[] = [];
 
     // Add all expected items with their received status
+    // Use composite key (upc + documentId) to match items uniquely
     currentShipment.expectedItems.forEach((expectedItem) => {
       const receivedItem = currentShipment.receivedItems.find(
-        (r) => r.upc === expectedItem.upc
+        (r) => r.upc === expectedItem.upc && r.documentId === expectedItem.documentId
       );
 
       if (receivedItem) {
@@ -245,14 +250,16 @@ export const selectAllItemsWithStatus = createSelector(
           qtyReceived: 0,
           qtyExpected: expectedItem.qtyExpected,
           discrepancy: -expectedItem.qtyExpected, // Negative = shortage
+          documentId: expectedItem.documentId,
         });
       }
     });
 
     // Add unexpected items (received but not in expected)
+    // Use composite key (upc + documentId) to check if item is expected
     currentShipment.receivedItems.forEach((receivedItem) => {
       const isExpected = currentShipment.expectedItems.some(
-        (e) => e.upc === receivedItem.upc
+        (e) => e.upc === receivedItem.upc && e.documentId === receivedItem.documentId
       );
       if (!isExpected) {
         allItems.push(receivedItem);

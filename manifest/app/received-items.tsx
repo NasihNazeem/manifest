@@ -34,7 +34,7 @@ export default function ReceivedItemsScreen() {
     (state) => state.shipment.currentShipment
   );
   const allItems = useAppSelector(selectAllItemsWithStatus); // For stats calculation
-  const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<{ upc: string; documentId?: string } | null>(null);
   const [editQuantity, setEditQuantity] = useState("");
 
   // Filter to only show items that have been received, sorted by most recent first
@@ -151,7 +151,7 @@ export default function ReceivedItemsScreen() {
   };
 
   const handleEditQuantity = (item: ReceivedItem) => {
-    setEditingItem(item.upc);
+    setEditingItem({ upc: item.upc, documentId: item.documentId });
     setEditQuantity(item.qtyReceived.toString());
   };
 
@@ -172,7 +172,7 @@ export default function ReceivedItemsScreen() {
     setEditQuantity("");
   };
 
-  const handleSaveQuantity = (upc: string) => {
+  const handleSaveQuantity = (upc: string, documentId?: string) => {
     const qty = parseInt(editQuantity);
 
     // Validate: must be a valid number and >= 0
@@ -184,8 +184,8 @@ export default function ReceivedItemsScreen() {
       return;
     }
 
-    // Update the quantity
-    dispatch(updateReceivedItemQuantity({ upc, qtyReceived: qty }));
+    // Update the quantity using composite key (upc + documentId)
+    dispatch(updateReceivedItemQuantity({ upc, documentId, qtyReceived: qty }));
 
     // Reset edit state
     setEditingItem(null);
@@ -306,7 +306,7 @@ export default function ReceivedItemsScreen() {
                 )}
                 <Text style={styles.itemDetail}>UPC: {item.upc}</Text>
 
-                {editingItem === item.upc ? (
+                {editingItem?.upc === item.upc && editingItem?.documentId === item.documentId ? (
                   <View style={styles.editModeContainer}>
                     <View style={styles.editInputRow}>
                       <View style={styles.editLabelContainer}>
@@ -335,7 +335,7 @@ export default function ReceivedItemsScreen() {
                       </Pressable>
                       <Pressable
                         style={styles.saveButton}
-                        onPress={() => handleSaveQuantity(item.upc)}
+                        onPress={() => handleSaveQuantity(item.upc, item.documentId)}
                       >
                         <Text style={styles.saveButtonText}>Save Changes</Text>
                       </Pressable>

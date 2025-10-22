@@ -38,6 +38,7 @@ export interface ShipmentState {
 
 export interface AddExpectedReceivedItemPayload {
   upc: string;
+  documentId?: string; // Required to identify which specific item when same UPC appears on multiple docs
   qtyReceived: number;
   deviceId?: string;
 }
