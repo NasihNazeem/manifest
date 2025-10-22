@@ -33,9 +33,14 @@ export default function ReceivedItemsScreen() {
   const currentShipment = useAppSelector(
     (state) => state.shipment.currentShipment
   );
-  const allItems = useAppSelector(selectAllItemsWithStatus); // Use new selector
+  const allItems = useAppSelector(selectAllItemsWithStatus); // For stats calculation
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState("");
+
+  // Filter to only show items that have been received, sorted by most recent first
+  const receivedItems = currentShipment?.receivedItems
+    .filter((item) => item.qtyReceived > 0)
+    .sort((a, b) => (b.scannedAt || 0) - (a.scannedAt || 0)) || [];
 
   if (!currentShipment) {
     return (
@@ -280,11 +285,11 @@ export default function ReceivedItemsScreen() {
         </View>
 
         <View style={styles.itemsSection}>
-          <Text style={styles.sectionTitle}>All Items ({allItems.length})</Text>
-          {allItems.length === 0 ? (
-            <Text style={styles.emptyText}>No items in shipment</Text>
+          <Text style={styles.sectionTitle}>Received Items ({receivedItems.length})</Text>
+          {receivedItems.length === 0 ? (
+            <Text style={styles.emptyText}>No items received yet</Text>
           ) : (
-            allItems.map((item, index) => (
+            receivedItems.map((item, index) => (
               <View key={index} style={styles.itemCard}>
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemDescription}>{item.description}</Text>
