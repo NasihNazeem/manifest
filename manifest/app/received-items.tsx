@@ -36,11 +36,26 @@ export default function ReceivedItemsScreen() {
   const allItems = useAppSelector(selectAllItemsWithStatus); // For stats calculation
   const [editingItem, setEditingItem] = useState<{ upc: string; documentId?: string } | null>(null);
   const [editQuantity, setEditQuantity] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Filter to only show items that have been received, sorted by most recent first
-  const receivedItems = currentShipment?.receivedItems
+  const allReceivedItems = currentShipment?.receivedItems
     .filter((item) => item.qtyReceived > 0)
     .sort((a, b) => (b.scannedAt || 0) - (a.scannedAt || 0)) || [];
+
+  // Apply search filter
+  const receivedItems = allReceivedItems.filter((item) => {
+    if (!searchQuery) return true;
+
+    const query = searchQuery.toLowerCase();
+    return (
+      item.itemNumber.toLowerCase().includes(query) ||
+      item.legacyItemNumber?.toLowerCase().includes(query) ||
+      item.description.toLowerCase().includes(query) ||
+      item.upc.includes(query) ||
+      item.documentId?.toLowerCase().includes(query)
+    );
+  });
 
   if (!currentShipment) {
     return (
@@ -284,10 +299,34 @@ export default function ReceivedItemsScreen() {
           </View>
         </View>
 
+        <View style={styles.searchSection}>
+          <Text style={styles.sectionTitle}>Search Received Items</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by Item #, Legacy #, Description, UPC, or Packing List"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+          />
+          {searchQuery && (
+            <Pressable
+              style={styles.clearSearchButton}
+              onPress={() => setSearchQuery("")}
+            >
+              <Text style={styles.clearSearchText}>Clear Search</Text>
+            </Pressable>
+          )}
+        </View>
+
         <View style={styles.itemsSection}>
-          <Text style={styles.sectionTitle}>Received Items ({receivedItems.length})</Text>
+          <Text style={styles.sectionTitle}>
+            Received Items ({receivedItems.length}
+            {searchQuery && ` of ${allReceivedItems.length}`})
+          </Text>
           {receivedItems.length === 0 ? (
-            <Text style={styles.emptyText}>No items received yet</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery ? `No items found matching "${searchQuery}"` : "No items received yet"}
+            </Text>
           ) : (
             receivedItems.map((item, index) => (
               <View key={index} style={styles.itemCard}>
@@ -688,5 +727,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
     textAlign: "center",
+  },
+  searchSection: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchInput: {
+    backgroundColor: "#f9f9f9",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    fontSize: 16,
+  },
+  clearSearchButton: {
+    backgroundColor: "#FF3B30",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  clearSearchText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
