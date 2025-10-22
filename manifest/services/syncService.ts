@@ -67,6 +67,21 @@ export async function syncShipmentToServer(shipmentId: string, shipmentData: any
       }),
     });
 
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+
     const result = await response.json();
     return result;
   } catch (error) {
@@ -103,6 +118,26 @@ export async function pushReceivedItem(
         }),
       }
     );
+
+    // Check if response is OK and is JSON
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } else {
+        // Server returned HTML or plain text error
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
 
     const result = await response.json();
     return result;
@@ -245,15 +280,15 @@ export async function deleteShipmentOnServer(shipmentId: string): Promise<{
 }
 
 /**
- * Sync all data - push local changes and pull remote changes
+ * Sync all data - pull remote changes
  */
-export async function syncAll(shipmentId: string, localReceivedItems: any[]): Promise<{
+export async function syncAll(shipmentId: string): Promise<{
   success: boolean;
   updatedItems: any[];
   error?: string;
 }> {
   try {
-    // Pull updates from server first
+    // Pull updates from server
     const pullResult = await pullReceivedItems(shipmentId);
 
     if (!pullResult.success) {

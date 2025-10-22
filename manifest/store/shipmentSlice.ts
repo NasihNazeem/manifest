@@ -4,6 +4,8 @@ import {
   ShipmentState,
   ExpectedItem,
   ReceivedItem,
+  AddExpectedReceivedItemPayload,
+  AddUnexpectedReceivedItemPayload,
 } from "../types/shipment";
 
 const initialState: ShipmentState = {
@@ -88,6 +90,106 @@ const shipmentSlice = createSlice({
               scannedByDevice: deviceId,
               scannedAt: Date.now(),
             };
+        state.currentShipment.receivedItems.push(receivedItem);
+      }
+    },
+
+    // Add expected received item (item in manifest)
+    addExpectedReceivedItem: (
+      state,
+      action: PayloadAction<AddExpectedReceivedItemPayload>
+    ) => {
+      if (!state.currentShipment) return;
+
+      const { upc, qtyReceived, deviceId } = action.payload;
+      const expectedItem = state.currentShipment.expectedItems.find(
+        (item) => item.upc === upc
+      );
+
+      if (!expectedItem) {
+        console.warn(`Expected item with UPC ${upc} not found in manifest`);
+        return;
+      }
+
+      // Check if item already received
+      const existingIndex = state.currentShipment.receivedItems.findIndex(
+        (item) => item.upc === upc
+      );
+
+      if (existingIndex !== -1) {
+        // Update existing received item
+        const existingItem = state.currentShipment.receivedItems[existingIndex];
+        existingItem.qtyReceived += qtyReceived;
+        existingItem.discrepancy =
+          existingItem.qtyReceived - existingItem.qtyExpected;
+      } else {
+        // Add new received item from expected item
+        const receivedItem: ReceivedItem = {
+          itemNumber: expectedItem.itemNumber,
+          legacyItemNumber: expectedItem.legacyItemNumber,
+          description: expectedItem.description,
+          upc: expectedItem.upc,
+          qtyReceived,
+          qtyExpected: expectedItem.qtyExpected,
+          discrepancy: qtyReceived - expectedItem.qtyExpected,
+          scannedByDevice: deviceId,
+          scannedAt: Date.now(),
+        };
+        state.currentShipment.receivedItems.push(receivedItem);
+      }
+    },
+
+    // Add unexpected received item (item NOT in manifest with optional user-provided details)
+    addUnexpectedReceivedItem: (
+      state,
+      action: PayloadAction<AddUnexpectedReceivedItemPayload>
+    ) => {
+      if (!state.currentShipment) return;
+
+      const {
+        upc,
+        qtyReceived,
+        itemNumber,
+        legacyItemNumber,
+        description,
+        deviceId,
+      } = action.payload;
+
+      // Check if item already received
+      const existingIndex = state.currentShipment.receivedItems.findIndex(
+        (item) => item.upc === upc
+      );
+
+      if (existingIndex !== -1) {
+        // Update existing received item quantity
+        const existingItem = state.currentShipment.receivedItems[existingIndex];
+        existingItem.qtyReceived += qtyReceived;
+        existingItem.discrepancy =
+          existingItem.qtyReceived - existingItem.qtyExpected;
+
+        // Update optional fields if provided (don't overwrite existing values with empty ones)
+        if (itemNumber && itemNumber.trim()) {
+          existingItem.itemNumber = itemNumber;
+        }
+        if (legacyItemNumber && legacyItemNumber.trim()) {
+          existingItem.legacyItemNumber = legacyItemNumber;
+        }
+        if (description && description.trim()) {
+          existingItem.description = description;
+        }
+      } else {
+        // Add new unexpected item with user-provided details or defaults
+        const receivedItem: ReceivedItem = {
+          itemNumber: itemNumber?.trim() || "",
+          legacyItemNumber: legacyItemNumber?.trim() || undefined,
+          description: description?.trim() || "Unexpected Item",
+          upc: upc,
+          qtyReceived,
+          qtyExpected: 0,
+          discrepancy: qtyReceived, // All unexpected items are overages
+          scannedByDevice: deviceId,
+          scannedAt: Date.now(),
+        };
         state.currentShipment.receivedItems.push(receivedItem);
       }
     },
@@ -220,6 +322,8 @@ const shipmentSlice = createSlice({
 export const {
   createShipment,
   addReceivedItem,
+  addExpectedReceivedItem,
+  addUnexpectedReceivedItem,
   updateReceivedItemQuantity,
   completeShipment,
   cancelShipment,

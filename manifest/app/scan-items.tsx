@@ -13,7 +13,10 @@ import {
 import { useRouter } from "expo-router";
 import { Camera, CameraView, BarcodeScanningResult } from "expo-camera";
 import { useAppSelector, useAppDispatch } from "../store/store";
-import { addReceivedItem } from "../store/shipmentSlice";
+import {
+  addExpectedReceivedItem,
+  addUnexpectedReceivedItem,
+} from "../store/shipmentSlice";
 import { ExpectedItem } from "../types/shipment";
 import { pushReceivedItem } from "../services/syncService";
 import Screen from "../components/Screen";
@@ -157,7 +160,7 @@ export default function ScanItemsScreen() {
     }
 
     dispatch(
-      addReceivedItem({
+      addExpectedReceivedItem({
         upc: selectedItem.upc,
         qtyReceived: qty,
       })
@@ -192,23 +195,23 @@ export default function ScanItemsScreen() {
     const upc = unexpectedItem.upc.trim();
 
     dispatch(
-      addReceivedItem({
+      addUnexpectedReceivedItem({
         upc,
         qtyReceived: qty,
+        itemNumber: unexpectedItem.itemNumber,
+        legacyItemNumber: unexpectedItem.legacyItemNumber,
+        description: unexpectedItem.description,
       })
     );
 
-    // Sync to server in background
     if (currentShipment) {
       pushReceivedItem(currentShipment.id, upc, qty).catch((error) => {
         console.error("Failed to sync to server:", error);
       });
     }
 
-    Alert.alert(
-      "Success",
-      `Added unexpected item with UPC ${upc} (Qty: ${qty})`
-    );
+    const itemDesc = unexpectedItem.description.trim() || "Unexpected Item";
+    Alert.alert("Success", `Added ${itemDesc} with UPC ${upc} (Qty: ${qty})`);
 
     setShowUnexpectedItemForm(false);
     setUnexpectedItem({
@@ -345,10 +348,7 @@ export default function ScanItemsScreen() {
                 keyboardType="numeric"
               />
 
-              <Pressable
-                style={styles.addButton}
-                onPress={handleAddReceived}
-              >
+              <Pressable style={styles.addButton} onPress={handleAddReceived}>
                 <Text style={styles.addButtonText}>Add to Received</Text>
               </Pressable>
             </View>

@@ -33,3 +33,18 @@ export interface ShipmentState {
   shipments: Shipment[];
   currentShipment: Shipment | null;
 }
+
+export interface AddExpectedReceivedItemPayload {
+  upc: string;
+  qtyReceived: number;
+  deviceId?: string;
+}
+
+export interface AddUnexpectedReceivedItemPayload {
+  upc: string;
+  qtyReceived: number;
+  itemNumber?: string;
+  legacyItemNumber?: string;
+  description?: string;
+  deviceId?: string;
+}
