@@ -20,12 +20,14 @@ const shipmentSlice = createSlice({
     createShipment: (
       state,
       action: PayloadAction<{
+        id?: string;
         documentIds: string[];
         expectedItems: ExpectedItem[];
       }>
     ) => {
+      const shipmentId = action.payload.id || Date.now().toString();
       const newShipment: Shipment = {
-        id: Date.now().toString(),
+        id: shipmentId,
         date: new Date().toISOString().split("T")[0],
         documentIds: action.payload.documentIds,
         expectedItems: action.payload.expectedItems,

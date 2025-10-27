@@ -260,17 +260,15 @@ export default function ScanItemsScreen() {
       >
         <View style={styles.headerRow}>
           <BackButton />
-          <View style={styles.header}>
-            <Text style={styles.title}>Scan or Search Items</Text>
-            <Pressable
-              style={styles.viewReceivedButton}
-              onPress={() => router.push("/received-items")}
-            >
-              <Text style={styles.viewReceivedText}>
-                View Received ({currentShipment.receivedItems.length})
-              </Text>
-            </Pressable>
-          </View>
+          <Text style={styles.title}>Scan or Search Items</Text>
+          <Pressable
+            style={styles.viewReceivedButton}
+            onPress={() => router.push("/received-items")}
+          >
+            <Text style={styles.viewReceivedText}>
+              View Received ({currentShipment.receivedItems.length})
+            </Text>
+          </Pressable>
         </View>
 
         <Pressable
@@ -293,7 +291,7 @@ export default function ScanItemsScreen() {
             style={styles.scanButton}
             onPress={requestCameraPermission}
           >
-            <Text style={styles.scanButtonText}>📷 Scan Barcode</Text>
+            <Text style={styles.scanButtonText}>Scan Barcode</Text>
           </Pressable>
         </View>
 
@@ -610,18 +608,13 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    marginBottom: 20,
-  },
-  header: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 20,
+    paddingRight: 5,
   },
   title: {
-    fontSize: 24,
+    flex: 1,
+    fontSize: 20,
     fontWeight: "bold",
     color: Colors.textPrimary,
   },
@@ -629,7 +622,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   viewReceivedText: {
     color: Colors.textLight,

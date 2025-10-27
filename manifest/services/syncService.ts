@@ -52,19 +52,17 @@ async function saveLastSyncTimestamp(shipmentId: string, timestamp: number): Pro
 }
 
 /**
- * Create or update a shipment on the server
+ * Create or update a shipment on the server (upsert)
  */
 export async function syncShipmentToServer(shipmentId: string, shipmentData: any): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments`, {
-      method: 'POST',
+    // Use PUT with the shipment ID in the URL to upsert (update existing or create new)
+    const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        shipmentId,
-        shipmentData,
-      }),
+      body: JSON.stringify(shipmentData),
     });
 
     if (!response.ok) {

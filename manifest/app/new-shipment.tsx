@@ -21,6 +21,8 @@ import {
 import { ExpectedItem } from "../types/shipment";
 import { syncShipmentToServer } from "../services/syncService";
 import Screen from "../components/Screen";
+import { Colors } from "../constants/theme";
+import BackButton from "../components/BackButton";
 
 export default function NewShipmentScreen() {
   const router = useRouter();
@@ -143,13 +145,22 @@ export default function NewShipmentScreen() {
       createdAt: Date.now(),
     };
 
-    dispatch(createShipment({ documentIds, expectedItems }));
+    dispatch(createShipment({ id: shipmentId, documentIds, expectedItems }));
 
     // Sync to server in background (don't block user)
-    syncShipmentToServer(shipmentId, shipmentData).catch((error) => {
-      console.error("Failed to sync shipment to server:", error);
-      // Shipment still works locally even if sync fails
-    });
+    console.log("Syncing new shipment to server with ID:", shipmentId);
+    syncShipmentToServer(shipmentId, shipmentData)
+      .then((result) => {
+        if (result.success) {
+          console.log("✅ Successfully synced shipment to server");
+        } else {
+          console.error("❌ Failed to sync shipment to server:", result.error);
+        }
+      })
+      .catch((error) => {
+        console.error("❌ Error syncing shipment to server:", error);
+        // Shipment still works locally even if sync fails
+      });
 
     router.replace("/scan-items");
   };
@@ -163,12 +174,14 @@ export default function NewShipmentScreen() {
 
   return (
     <Screen style={styles.container}>
+      <View style={styles.backButtonContainer}>
+        <BackButton />
+        <Text style={styles.title}>New Shipment</Text>
+      </View>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.title}>New Shipment</Text>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
             Step 1: Upload Purchase Order PDF
@@ -183,15 +196,9 @@ export default function NewShipmentScreen() {
             </Text>
           </Pressable>
 
-          <Pressable style={styles.demoButton} onPress={handleUseDemoData}>
-            <Text style={styles.demoButtonText}>
-              Or Use Demo Data for Testing
-            </Text>
-          </Pressable>
-
           {loading && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
+              <ActivityIndicator size="large" color={Colors.primary} />
               <Text style={styles.loadingText}>Processing PDF...</Text>
             </View>
           )}
@@ -242,6 +249,7 @@ export default function NewShipmentScreen() {
                   <TextInput
                     style={styles.itemInput}
                     placeholder="Item Number *"
+                    placeholderTextColor={Colors.placeholder}
                     value={item.itemNumber}
                     onChangeText={(value) =>
                       handleUpdateItem(index, "itemNumber", value)
@@ -251,6 +259,7 @@ export default function NewShipmentScreen() {
                   <TextInput
                     style={styles.itemInput}
                     placeholder="Legacy Item Number (optional)"
+                    placeholderTextColor={Colors.placeholder}
                     value={item.legacyItemNumber || ""}
                     onChangeText={(value) =>
                       handleUpdateItem(index, "legacyItemNumber", value)
@@ -260,6 +269,7 @@ export default function NewShipmentScreen() {
                   <TextInput
                     style={styles.itemInput}
                     placeholder="Description *"
+                    placeholderTextColor={Colors.placeholder}
                     value={item.description}
                     onChangeText={(value) =>
                       handleUpdateItem(index, "description", value)
@@ -269,6 +279,7 @@ export default function NewShipmentScreen() {
                   <TextInput
                     style={styles.itemInput}
                     placeholder="UPC *"
+                    placeholderTextColor={Colors.placeholder}
                     value={item.upc}
                     onChangeText={(value) =>
                       handleUpdateItem(index, "upc", value)
@@ -279,6 +290,7 @@ export default function NewShipmentScreen() {
                   <TextInput
                     style={styles.itemInput}
                     placeholder="Quantity Expected *"
+                    placeholderTextColor={Colors.placeholder}
                     value={item.qtyExpected.toString()}
                     onChangeText={(value) =>
                       handleUpdateItem(index, "qtyExpected", value)
@@ -313,7 +325,15 @@ export default function NewShipmentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: Colors.background,
+  },
+  backButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
+    gap: 10,
   },
   scrollView: {
     flex: 1,
@@ -324,17 +344,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   section: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -342,7 +361,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 15,
-    color: "#333",
+    color: Colors.textPrimary,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -351,14 +370,14 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   uploadButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
   },
   uploadButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -368,11 +387,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#007AFF",
+    borderColor: Colors.primary,
     alignItems: "center",
   },
   demoButtonText: {
-    color: "#007AFF",
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -383,7 +402,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: "#666",
+    color: Colors.textSecondary,
   },
   inputRow: {
     flexDirection: "row",
@@ -393,21 +412,23 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 15,
     fontSize: 16,
+    color: Colors.textPrimary,
+    backgroundColor: Colors.surfaceElevated,
   },
   addButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
     justifyContent: "center",
   },
   addButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -417,25 +438,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: Colors.divider,
   },
   documentIdText: {
     fontSize: 16,
-    color: "#333",
+    color: Colors.textPrimary,
     fontFamily: "monospace",
   },
   removeText: {
-    color: "#FF3B30",
+    color: Colors.error,
     fontSize: 14,
     fontWeight: "600",
   },
   addItemText: {
-    color: "#007AFF",
+    color: Colors.primary,
     fontSize: 16,
     fontWeight: "600",
   },
   itemCard: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
@@ -449,35 +470,36 @@ const styles = StyleSheet.create({
   itemNumber: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#666",
+    color: Colors.textSecondary,
   },
   documentIdBadge: {
-    backgroundColor: "#E3F2FD",
+    backgroundColor: Colors.primaryLight,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
     marginBottom: 10,
     alignSelf: "flex-start",
     borderWidth: 1,
-    borderColor: "#2196F3",
+    borderColor: Colors.primary,
   },
   documentIdBadgeText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#1976D2",
+    color: Colors.textLight,
   },
   itemInput: {
-    backgroundColor: "white",
+    backgroundColor: Colors.surfaceElevated,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: Colors.border,
     borderRadius: 6,
     paddingVertical: 10,
     paddingHorizontal: 12,
     fontSize: 14,
     marginBottom: 8,
+    color: Colors.textPrimary,
   },
   startButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.success,
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -486,7 +508,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   startButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 18,
     fontWeight: "bold",
   },
@@ -496,30 +518,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "rgba(245, 245, 245, 0.95)",
-    borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    paddingBottom: 40,
   },
   floatingButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: Colors.primary,
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 12,
     alignItems: "center",
-    shadowColor: "#34C759",
+    shadowColor: Colors.primaryLight,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
   floatingButtonText: {
-    color: "white",
+    color: Colors.textLight,
     fontSize: 18,
     fontWeight: "bold",
   },

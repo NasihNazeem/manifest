@@ -11,8 +11,17 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAppSelector, useAppDispatch } from "../store/store";
-import { createShipment } from "../store/shipmentSlice";
+import {
+  completeShipment,
+  createShipment,
+  cancelShipment,
+  deleteShipment,
+} from "../store/shipmentSlice";
 import { API_CONFIG } from "../config/api";
+import {
+  deleteShipmentOnServer,
+  syncShipmentToServer,
+} from "../services/syncService";
 import Screen from "../components/Screen";
 import { Colors } from "../constants/theme";
 
@@ -93,9 +102,10 @@ export default function HomeScreen() {
     setLoading(true);
 
     try {
-      // Create local shipment from server data
+      // Create local shipment from server data with the same ID
       dispatch(
         createShipment({
+          id: shipment.id,
           documentIds: shipment.documentIds,
           expectedItems: shipment.expectedItems,
         })
@@ -110,6 +120,86 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleComplete = () => {
+    Alert.alert(
+      "Complete Shipment",
+      "Are you sure you want to complete this shipment? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Complete",
+          onPress: async () => {
+            if (!currentShipment) return;
+
+            console.log("Completing shipment with ID:", currentShipment.id);
+
+            // First, ensure the shipment is synced to the server with latest data
+            const syncResult = await syncShipmentToServer(currentShipment.id, {
+              id: currentShipment.id,
+              date: currentShipment.date,
+              documentIds: currentShipment.documentIds,
+              expectedItems: currentShipment.expectedItems,
+              receivedItems: currentShipment.receivedItems,
+              status: "completed",
+              createdAt: currentShipment.createdAt,
+              completedAt: Date.now(),
+            });
+
+            if (!syncResult.success) {
+              console.error(
+                "Failed to sync shipment completion to server:",
+                syncResult.error
+              );
+              Alert.alert(
+                "Warning",
+                `Failed to sync completion to server: ${syncResult.error}\n\nShipment was completed locally.`
+              );
+            } else {
+              console.log("Successfully synced completed shipment to server");
+            }
+
+            // Update local state
+            dispatch(completeShipment());
+            router.replace("/");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCancel = () => {
+    Alert.alert(
+      "Cancel Shipment",
+      "Are you sure you want to cancel this shipment? All data will be lost.",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Yes, Cancel",
+          style: "destructive",
+          onPress: async () => {
+            if (!currentShipment) return;
+
+            // Delete from server first
+            const result = await deleteShipmentOnServer(currentShipment.id);
+
+            if (!result.success) {
+              console.error(
+                "Failed to delete shipment from server:",
+                result.error
+              );
+              // Still delete locally even if server delete fails
+            }
+
+            // Clear local state
+            dispatch(cancelShipment()); // Clear current shipment
+            dispatch(deleteShipment(currentShipment.id)); // Remove from history
+            router.replace("/");
+          },
+        },
+      ]
+    );
   };
 
   // Fetch active shipments when join form is opened
@@ -268,6 +358,22 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
+      {currentShipment && (
+        <View style={styles.fabContainer}>
+          <Pressable
+            style={[styles.fab, styles.cancelFab]}
+            onPress={handleCancel}
+          >
+            <Text style={styles.fabText}>Cancel Shipment</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.fab, styles.completeFab]}
+            onPress={handleComplete}
+          >
+            <Text style={styles.fabText}>Complete Shipment</Text>
+          </Pressable>
+        </View>
+      )}
     </Screen>
   );
 }
@@ -277,11 +383,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  fabContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "column",
+    paddingTop: 10,
+    paddingBottom: 40,
+    paddingHorizontal: 30,
+    gap: 10,
+  },
+  fab: {
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  fabText: {
+    color: Colors.textLight,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  cancelFab: {
+    backgroundColor: Colors.error,
+  },
+  completeFab: {
+    backgroundColor: Colors.success,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 140,
   },
   title: {
     fontSize: 28,

@@ -2,7 +2,10 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-nati
 import { useAppSelector, useAppDispatch } from '../store/store';
 import { deleteShipment } from '../store/shipmentSlice';
 import { exportReceivedItems, exportDiscrepancies } from '../utils/exportUtils';
+import { deleteShipmentOnServer } from '../services/syncService';
 import Screen from '../components/Screen';
+import BackButton from '../components/BackButton';
+import { Colors } from '../constants/theme';
 
 export default function HistoryScreen() {
   const dispatch = useAppDispatch();
@@ -17,7 +20,18 @@ export default function HistoryScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => dispatch(deleteShipment(shipmentId)),
+          onPress: async () => {
+            // Delete from server first
+            const result = await deleteShipmentOnServer(shipmentId);
+
+            if (!result.success) {
+              console.error('Failed to delete shipment from server:', result.error);
+              // Still delete locally even if server delete fails
+            }
+
+            // Delete from local state
+            dispatch(deleteShipment(shipmentId));
+          },
         },
       ]
     );
@@ -62,6 +76,10 @@ export default function HistoryScreen() {
   return (
     <Screen style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.headerRow}>
+          <BackButton />
+          <Text style={styles.title}>Shipment History</Text>
+        </View>
         {shipments.map(shipment => (
           <View key={shipment.id} style={styles.shipmentCard}>
             <View style={styles.shipmentHeader}>
@@ -131,13 +149,24 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 15,
+    padding: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.textPrimary,
   },
   emptyContainer: {
     flex: 1,
@@ -148,22 +177,22 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#999',
+    color: Colors.textMuted,
     marginBottom: 10,
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#bbb',
+    color: Colors.textMuted,
     textAlign: 'center',
   },
   shipmentCard: {
-    backgroundColor: 'white',
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -176,11 +205,11 @@ const styles = StyleSheet.create({
   shipmentDate: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.textPrimary,
   },
   shipmentId: {
     fontSize: 14,
-    color: '#999',
+    color: Colors.textMuted,
     fontFamily: 'monospace',
   },
   shipmentStats: {
@@ -188,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: 15,
     paddingVertical: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
   },
   statItem: {
@@ -197,15 +226,15 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: Colors.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   warningText: {
-    color: '#FF9500',
+    color: Colors.warning,
   },
   documentIdsContainer: {
     marginBottom: 10,
@@ -213,17 +242,17 @@ const styles = StyleSheet.create({
   documentIdsLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#666',
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
   documentIds: {
     fontSize: 14,
-    color: '#333',
+    color: Colors.textPrimary,
     fontFamily: 'monospace',
   },
   timestamp: {
     fontSize: 12,
-    color: '#999',
+    color: Colors.textMuted,
     marginBottom: 15,
   },
   actionsContainer: {
@@ -240,16 +269,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   exportButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: Colors.primary,
   },
   warningButton: {
-    backgroundColor: '#FF9500',
+    backgroundColor: Colors.warning,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: Colors.error,
   },
   actionButtonText: {
-    color: 'white',
+    color: Colors.textLight,
     fontSize: 14,
     fontWeight: '600',
   },

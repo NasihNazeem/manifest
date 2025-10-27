@@ -11,9 +11,6 @@ import {
 import { useRouter } from "expo-router";
 import { useAppSelector, useAppDispatch } from "../store/store";
 import {
-  completeShipment,
-  cancelShipment,
-  deleteShipment,
   updateReceivedItemQuantity,
   selectAllItemsWithStatus,
 } from "../store/shipmentSlice";
@@ -24,7 +21,6 @@ import {
   exportShortages,
 } from "../utils/exportUtils";
 import { ReceivedItem } from "../types/shipment";
-import { deleteShipmentOnServer } from "../services/syncService";
 import Screen from "../components/Screen";
 import { Colors } from "../constants/theme";
 import BackButton from "../components/BackButton";
@@ -36,14 +32,18 @@ export default function ReceivedItemsScreen() {
     (state) => state.shipment.currentShipment
   );
   const allItems = useAppSelector(selectAllItemsWithStatus); // For stats calculation
-  const [editingItem, setEditingItem] = useState<{ upc: string; documentId?: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{
+    upc: string;
+    documentId?: string;
+  } | null>(null);
   const [editQuantity, setEditQuantity] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Filter to only show items that have been received, sorted by most recent first
-  const allReceivedItems = currentShipment?.receivedItems
-    .filter((item) => item.qtyReceived > 0)
-    .sort((a, b) => (b.scannedAt || 0) - (a.scannedAt || 0)) || [];
+  const allReceivedItems =
+    currentShipment?.receivedItems
+      .filter((item) => item.qtyReceived > 0)
+      .sort((a, b) => (b.scannedAt || 0) - (a.scannedAt || 0)) || [];
 
   // Apply search filter
   const receivedItems = allReceivedItems.filter((item) => {
@@ -68,56 +68,6 @@ export default function ReceivedItemsScreen() {
       </Screen>
     );
   }
-
-  const handleComplete = () => {
-    Alert.alert(
-      "Complete Shipment",
-      "Are you sure you want to complete this shipment? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Complete",
-          onPress: () => {
-            dispatch(completeShipment());
-            router.replace("/");
-          },
-        },
-      ]
-    );
-  };
-
-  const handleCancel = () => {
-    Alert.alert(
-      "Cancel Shipment",
-      "Are you sure you want to cancel this shipment? All data will be lost.",
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Yes, Cancel",
-          style: "destructive",
-          onPress: async () => {
-            if (!currentShipment) return;
-
-            // Delete from server first
-            const result = await deleteShipmentOnServer(currentShipment.id);
-
-            if (!result.success) {
-              console.error(
-                "Failed to delete shipment from server:",
-                result.error
-              );
-              // Still delete locally even if server delete fails
-            }
-
-            // Clear local state
-            dispatch(cancelShipment()); // Clear current shipment
-            dispatch(deleteShipment(currentShipment.id)); // Remove from history
-            router.replace("/");
-          },
-        },
-      ]
-    );
-  };
 
   const handleExport = async (
     type: "all" | "discrepancies" | "overages" | "shortages"
@@ -245,14 +195,10 @@ export default function ReceivedItemsScreen() {
             <Text style={styles.statLabel}>Expected Items</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.totalReceived}</Text>
-            <Text style={styles.statLabel}>Received Items</Text>
-          </View>
-          <View style={styles.statBox}>
             <Text
               style={[
                 styles.statValue,
-                stats.discrepancies > 0 && styles.warningValue,
+                stats.discrepancies > 0 && styles.warning,
               ]}
             >
               {stats.discrepancies}
@@ -260,16 +206,24 @@ export default function ReceivedItemsScreen() {
             <Text style={styles.statLabel}>Discrepancies</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={[styles.statValue, styles.overageValue]}>
+            <Text
+              style={[styles.statValue, stats.overages > 0 && styles.warning]}
+            >
               {stats.overages}
             </Text>
             <Text style={styles.statLabel}>Overages</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={[styles.statValue, styles.shortageValue]}>
+            <Text
+              style={[styles.statValue, stats.shortages > 0 && styles.warning]}
+            >
               {stats.shortages}
             </Text>
             <Text style={styles.statLabel}>Shortages</Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statValue}>{stats.totalReceived}</Text>
+            <Text style={styles.statLabel}>Received Items</Text>
           </View>
         </View>
 
@@ -277,27 +231,25 @@ export default function ReceivedItemsScreen() {
           <Text style={styles.sectionTitle}>Export Options</Text>
           <View style={styles.exportButtons}>
             <Pressable
-              style={[styles.exportButton, styles.primaryExport]}
+              style={styles.exportButton}
               onPress={() => handleExport("all")}
             >
               <Text style={styles.exportButtonText}>Export All</Text>
             </Pressable>
             <Pressable
-              style={[styles.exportButton, styles.warningExport]}
+              style={styles.exportButton}
               onPress={() => handleExport("discrepancies")}
             >
-              <Text style={styles.exportButtonText}>
-                Export Discrepancies
-              </Text>
+              <Text style={styles.exportButtonText}>Export Discrepancies</Text>
             </Pressable>
             <Pressable
-              style={[styles.exportButton, styles.overageExport]}
+              style={styles.exportButton}
               onPress={() => handleExport("overages")}
             >
               <Text style={styles.exportButtonText}>Export Overages</Text>
             </Pressable>
             <Pressable
-              style={[styles.exportButton, styles.shortageExport]}
+              style={styles.exportButton}
               onPress={() => handleExport("shortages")}
             >
               <Text style={styles.exportButtonText}>Export Shortages</Text>
@@ -332,7 +284,9 @@ export default function ReceivedItemsScreen() {
           </Text>
           {receivedItems.length === 0 ? (
             <Text style={styles.emptyText}>
-              {searchQuery ? `No items found matching "${searchQuery}"` : "No items received yet"}
+              {searchQuery
+                ? `No items found matching "${searchQuery}"`
+                : "No items received yet"}
             </Text>
           ) : (
             receivedItems.map((item, index) => (
@@ -352,7 +306,8 @@ export default function ReceivedItemsScreen() {
                 )}
                 <Text style={styles.itemDetail}>UPC: {item.upc}</Text>
 
-                {editingItem?.upc === item.upc && editingItem?.documentId === item.documentId ? (
+                {editingItem?.upc === item.upc &&
+                editingItem?.documentId === item.documentId ? (
                   <View style={styles.editModeContainer}>
                     <View style={styles.editInputRow}>
                       <View style={styles.editLabelContainer}>
@@ -382,7 +337,9 @@ export default function ReceivedItemsScreen() {
                       </Pressable>
                       <Pressable
                         style={styles.saveButton}
-                        onPress={() => handleSaveQuantity(item.upc, item.documentId)}
+                        onPress={() =>
+                          handleSaveQuantity(item.upc, item.documentId)
+                        }
                       >
                         <Text style={styles.saveButtonText}>Save Changes</Text>
                       </Pressable>
@@ -421,27 +378,13 @@ export default function ReceivedItemsScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating Action Buttons */}
+      {/* Floating Action Button */}
       <View style={styles.fabContainer}>
-        <Pressable
-          style={[styles.fab, styles.cancelFab]}
-          onPress={handleCancel}
-        >
-          <Text style={styles.fabText}>Cancel</Text>
-        </Pressable>
-
         <Pressable
           style={[styles.fab, styles.continueFab]}
           onPress={() => router.back()}
         >
           <Text style={styles.fabText}>Continue Scanning</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.fab, styles.completeFab]}
-          onPress={handleComplete}
-        >
-          <Text style={styles.fabText}>Complete</Text>
         </Pressable>
       </View>
     </Screen>
@@ -462,6 +405,9 @@ const styles = StyleSheet.create({
   },
   backButtonContainer: {
     marginBottom: 15,
+  },
+  warning: {
+    color: Colors.warning,
   },
   statsContainer: {
     flexDirection: "row",
@@ -485,7 +431,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 32,
     fontWeight: "bold",
-    color: Colors.primary,
+    color: Colors.textPrimary,
   },
   statLabel: {
     fontSize: 12,
@@ -531,18 +477,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: "45%",
     alignItems: "center",
-  },
-  primaryExport: {
     backgroundColor: Colors.primary,
-  },
-  warningExport: {
-    backgroundColor: Colors.warning,
-  },
-  overageExport: {
-    backgroundColor: Colors.success,
-  },
-  shortageExport: {
-    backgroundColor: Colors.error,
   },
   exportButtonText: {
     color: Colors.textLight,
@@ -691,21 +626,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: "row",
-    backgroundColor: Colors.surface,
     paddingTop: 10,
     paddingBottom: 40,
     paddingHorizontal: 15,
     gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
   },
   fab: {
-    flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -716,14 +642,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  cancelFab: {
-    backgroundColor: Colors.error,
-  },
   continueFab: {
     backgroundColor: Colors.primary,
-  },
-  completeFab: {
-    backgroundColor: Colors.success,
   },
   fabText: {
     color: Colors.textLight,
