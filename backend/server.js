@@ -3,39 +3,48 @@ const cors = require("cors");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const rateLimit = require("express-rate-limit");
+const bcrypt = require("bcrypt");
 const db = require("./database");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Rate limiting configuration
+// Rate limiting for internal tool - uses custom key generator to avoid IP detection issues
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  max: 1000, // High limit for internal tool with ~9 users
+  message: "Too many requests, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Custom key generator using user agent + time window (avoids IP-based issues)
+  keyGenerator: (req) => {
+    return `${req.headers['user-agent'] || 'unknown'}_${Math.floor(Date.now() / (15 * 60 * 1000))}`;
+  },
+  // Skip all validations since we're using custom key generator
+  validate: false,
 });
 
-// Stricter rate limit for PDF parsing (resource intensive)
 const pdfLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 PDF uploads per 15 minutes
+  windowMs: 15 * 60 * 1000,
+  max: 50,
   message: "Too many PDF uploads, please try again later.",
+  keyGenerator: (req) => {
+    return `pdf_${req.headers['user-agent'] || 'unknown'}_${Math.floor(Date.now() / (15 * 60 * 1000))}`;
+  },
+  validate: false,
 });
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Apply general rate limiting to all API routes
 app.use("/api/", limiter);
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 10 * 1024 * 1024,
   },
 });
 
@@ -51,7 +60,6 @@ function parseItemLine(line) {
   const itemNumber = itemNumMatch[1];
   let remaining = trimmed.substring(7);
 
-  // Extract legacy number (optional, various formats)
   let legacyNumber = null;
 
   // Try patterns from most specific to least specific
@@ -130,9 +138,6 @@ function parseItemLine(line) {
   return result;
 }
 
-/**
- * Parse multi-line item data
- */
 function parseMultiLineItem(lines, startIndex) {
   const firstLine = lines[startIndex];
 
@@ -140,7 +145,6 @@ function parseMultiLineItem(lines, startIndex) {
     return null;
   }
 
-  // Try single line first
   const singleLine = parseItemLine(firstLine);
   if (singleLine) {
     return { item: singleLine, linesConsumed: 1 };
@@ -170,9 +174,6 @@ function parseMultiLineItem(lines, startIndex) {
   return null;
 }
 
-/**
- * Extract all items from PDF text
- */
 function extractItems(text) {
   const lines = text.split("\n");
   const items = [];
@@ -205,9 +206,6 @@ function extractItems(text) {
   return items;
 }
 
-/**
- * Extract packing list number from a single page's text
- */
 function extractPackingListNumber(text) {
   const lines = text.split("\n");
 
@@ -231,6 +229,7 @@ function extractPackingListNumber(text) {
   return null;
 }
 
+const SALT_ROUNDS = 10;
 
 // Health check endpoint
 app.get("/", (req, res) => {
@@ -239,6 +238,9 @@ app.get("/", (req, res) => {
     message: "PDF Parser & Sync API is running",
     endpoints: {
       health: "GET /",
+      login: "POST /api/auth/login",
+      logout: "POST /api/auth/logout",
+      changePasscode: "POST /api/auth/change-passcode",
       parsePdf: "POST /api/parse-pdf",
       createShipment: "POST /api/shipments",
       getShipment: "GET /api/shipments/:id",
@@ -251,121 +253,309 @@ app.get("/", (req, res) => {
   });
 });
 
-// PDF parsing endpoint (with stricter rate limiting)
-app.post("/api/parse-pdf", pdfLimiter, upload.single("file"), async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
-    let pdfBuffer;
+    const { username, passcode } = req.body;
 
-    // Handle file upload or base64
-    if (req.file) {
-      pdfBuffer = req.file.buffer;
-    } else if (req.body.fileContent) {
-      pdfBuffer = Buffer.from(req.body.fileContent, "base64");
-    } else {
+    if (!username || !passcode) {
       return res.status(400).json({
         success: false,
-        error: "No file provided",
+        error: "Username and passcode are required",
       });
     }
 
-    // Parse PDF
-    const data = await pdfParse(pdfBuffer);
+    console.log(`Login attempt for user: ${username}`);
 
-    console.log('📄 PDF parsed:', {
-      numPages: data.numpages,
-      textLength: data.text.length,
-      firstChars: data.text.substring(0, 500)
-    });
+    const user = await db.getUserByUsername(username);
 
-    // Parse page-by-page to associate items with document IDs
-    const allItems = [];
-    const packingListsSet = new Set();
-
-    // Split text by page breaks (pdf-parse concatenates all pages)
-    // We'll use a heuristic: "Packing List" typically appears at the start of each page
-    const pageTexts = [];
-    const lines = data.text.split('\n');
-    let currentPageText = [];
-
-    console.log('📝 Total lines:', lines.length);
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      // Detect new page by "Packing List" header
-      if (line.includes('Packing List') && currentPageText.length > 0) {
-        console.log('📑 New page detected at line', i);
-        pageTexts.push(currentPageText.join('\n'));
-        currentPageText = [line];
-      } else {
-        currentPageText.push(line);
-      }
-    }
-    // Add last page
-    if (currentPageText.length > 0) {
-      pageTexts.push(currentPageText.join('\n'));
-    }
-
-    console.log('📚 Split into pages:', pageTexts.length);
-
-    // Process each page
-    for (let pageIndex = 0; pageIndex < pageTexts.length; pageIndex++) {
-      const pageText = pageTexts[pageIndex];
-      const documentId = extractPackingListNumber(pageText);
-      const pageItems = extractItems(pageText);
-
-      console.log(`📄 Page ${pageIndex + 1}:`, {
-        documentId,
-        itemCount: pageItems.length,
-        preview: pageText.substring(0, 200)
-      });
-
-      // Add documentId to each item from this page
-      pageItems.forEach(item => {
-        item.documentId = documentId;
-        allItems.push(item);
-        if (documentId) {
-          packingListsSet.add(documentId);
-        }
+    if (!user) {
+      console.log(`User not found: ${username}`);
+      return res.status(401).json({
+        success: false,
+        error: "Invalid username or passcode",
       });
     }
 
-    const packingLists = Array.from(packingListsSet);
-    console.log('✅ Parsing complete:', {
-      packingLists,
-      totalItems: allItems.length
-    });
+    const isValid = await bcrypt.compare(passcode, user.passcodeHash);
+
+    if (!isValid) {
+      console.log(`Invalid passcode for user: ${username}`);
+      return res.status(401).json({
+        success: false,
+        error: "Invalid username or passcode",
+      });
+    }
+
+    await db.updateLastLogin(user.id);
+
+    const session = await db.createSession(user.id);
+
+    if (!session) {
+      console.error(`Failed to create session for user: ${username}`);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to create session",
+      });
+    }
+
+    console.log(`Login successful for user: ${username}`);
 
     res.json({
       success: true,
-      data: {
-        metadata: {
-          parsedAt: new Date().toISOString(),
-          numPages: data.numpages,
-          textLength: data.text.length,
-          totalPackingLists: packingLists.length,
-          totalItems: allItems.length,
-          totalQuantity: allItems.reduce((sum, item) => sum + item.qtyShipped, 0),
-        },
-        packingLists: packingLists,
-        expectedItems: allItems,
+      sessionToken: session.sessionToken,
+      expiresAt: session.expiresAt,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        isTempPasscode: user.isTempPasscode,
+        lastLogin: user.lastLogin,
       },
     });
   } catch (error) {
-    console.error("Error parsing PDF:", error);
+    console.error("Error during login:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to parse PDF",
-      message: error.message,
+      error: "Login failed",
     });
   }
 });
 
-// ============================================
-// SYNC ENDPOINTS FOR MULTI-DEVICE SUPPORT
-// ============================================
+app.post("/api/auth/logout", async (req, res) => {
+  try {
+    const { sessionToken } = req.body;
 
-// Create or update a shipment
+    if (!sessionToken) {
+      return res.status(400).json({
+        success: false,
+        error: "Session token is required",
+      });
+    }
+
+    const success = await db.deleteSession(sessionToken);
+
+    if (!success) {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to logout",
+      });
+    }
+
+    console.log(`Logout successful`);
+
+    res.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Error during logout:", error);
+    res.status(500).json({
+      success: false,
+      error: "Logout failed",
+    });
+  }
+});
+
+app.post("/api/auth/change-passcode", async (req, res) => {
+  try {
+    const { sessionToken, currentPasscode, newPasscode } = req.body;
+
+    if (!sessionToken || !currentPasscode || !newPasscode) {
+      return res.status(400).json({
+        success: false,
+        error: "Session token, current passcode, and new passcode are required",
+      });
+    }
+
+    // Validate new passcode format (must be exactly 4 digits)
+    if (!/^\d{4}$/.test(newPasscode)) {
+      return res.status(400).json({
+        success: false,
+        error: "New passcode must be exactly 4 digits",
+      });
+    }
+
+    // Validate session
+    const sessionData = await db.validateSession(sessionToken);
+
+    if (!sessionData) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid or expired session",
+      });
+    }
+
+    console.log(
+      `Passcode change request for user: ${sessionData.user.username}`
+    );
+
+    const user = await db.getUserByUsername(sessionData.user.username);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    const isValid = await bcrypt.compare(currentPasscode, user.passcodeHash);
+
+    if (!isValid) {
+      console.log(
+        `Invalid current passcode for user: ${sessionData.user.username}`
+      );
+      return res.status(401).json({
+        success: false,
+        error: "Current passcode is incorrect",
+      });
+    }
+
+    const newPasscodeHash = await bcrypt.hash(newPasscode, SALT_ROUNDS);
+
+    const result = await db.changePasscode(user.id, newPasscodeHash);
+
+    if (!result.success) {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to change passcode",
+      });
+    }
+
+    console.log(
+      `Passcode changed successfully for user: ${sessionData.user.username}`
+    );
+
+    res.json({
+      success: true,
+      message: "Passcode changed successfully",
+    });
+  } catch (error) {
+    console.error("Error changing passcode:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to change passcode",
+    });
+  }
+});
+
+// PDF parsing endpoint (with stricter rate limiting)
+app.post(
+  "/api/parse-pdf",
+  pdfLimiter,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      let pdfBuffer;
+
+      // Handle file upload or base64
+      if (req.file) {
+        pdfBuffer = req.file.buffer;
+      } else if (req.body.fileContent) {
+        pdfBuffer = Buffer.from(req.body.fileContent, "base64");
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: "No file provided",
+        });
+      }
+
+      // Parse PDF
+      const data = await pdfParse(pdfBuffer);
+
+      console.log("PDF parsed:", {
+        numPages: data.numpages,
+        textLength: data.text.length,
+        firstChars: data.text.substring(0, 500),
+      });
+
+      // Parse page-by-page to associate items with document IDs
+      const allItems = [];
+      const packingListsSet = new Set();
+
+      // Split text by page breaks (pdf-parse concatenates all pages)
+      // We'll use a heuristic: "Packing List" typically appears at the start of each page
+      const pageTexts = [];
+      const lines = data.text.split("\n");
+      let currentPageText = [];
+
+      console.log("Total lines:", lines.length);
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Detect new page by "Packing List" header
+        if (line.includes("Packing List") && currentPageText.length > 0) {
+          console.log("New page detected at line", i);
+          pageTexts.push(currentPageText.join("\n"));
+          currentPageText = [line];
+        } else {
+          currentPageText.push(line);
+        }
+      }
+      // Add last page
+      if (currentPageText.length > 0) {
+        pageTexts.push(currentPageText.join("\n"));
+      }
+
+      console.log("Split into pages:", pageTexts.length);
+
+      // Process each page
+      for (let pageIndex = 0; pageIndex < pageTexts.length; pageIndex++) {
+        const pageText = pageTexts[pageIndex];
+        const documentId = extractPackingListNumber(pageText);
+        const pageItems = extractItems(pageText);
+
+        console.log(`Page ${pageIndex + 1}:`, {
+          documentId,
+          itemCount: pageItems.length,
+          preview: pageText.substring(0, 200),
+        });
+
+        // Add documentId to each item from this page
+        pageItems.forEach((item) => {
+          item.documentId = documentId;
+          allItems.push(item);
+          if (documentId) {
+            packingListsSet.add(documentId);
+          }
+        });
+      }
+
+      const packingLists = Array.from(packingListsSet);
+      console.log("Parsing complete:", {
+        packingLists,
+        totalItems: allItems.length,
+      });
+
+      res.json({
+        success: true,
+        data: {
+          metadata: {
+            parsedAt: new Date().toISOString(),
+            numPages: data.numpages,
+            textLength: data.text.length,
+            totalPackingLists: packingLists.length,
+            totalItems: allItems.length,
+            totalQuantity: allItems.reduce(
+              (sum, item) => sum + item.qtyShipped,
+              0
+            ),
+          },
+          packingLists: packingLists,
+          expectedItems: allItems,
+        },
+      });
+    } catch (error) {
+      console.error("Error parsing PDF:", error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to parse PDF",
+        message: error.message,
+      });
+    }
+  }
+);
+
 app.post("/api/shipments", async (req, res) => {
   try {
     const { shipmentId, shipmentData } = req.body;
@@ -373,7 +563,7 @@ app.post("/api/shipments", async (req, res) => {
     if (!shipmentId || !shipmentData) {
       return res.status(400).json({
         success: false,
-        error: "shipmentId and shipmentData are required"
+        error: "shipmentId and shipmentData are required",
       });
     }
 
@@ -383,24 +573,23 @@ app.post("/api/shipments", async (req, res) => {
       const shipment = await db.getShipment(shipmentId);
       res.json({
         success: true,
-        shipment
+        shipment,
       });
     } else {
       res.status(500).json({
         success: false,
-        error: "Failed to save shipment"
+        error: "Failed to save shipment",
       });
     }
   } catch (error) {
     console.error("Error saving shipment:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Get a specific shipment
 app.get("/api/shipments/:id", async (req, res) => {
   try {
     const shipment = await db.getShipment(req.params.id);
@@ -408,41 +597,39 @@ app.get("/api/shipments/:id", async (req, res) => {
     if (shipment) {
       res.json({
         success: true,
-        shipment
+        shipment,
       });
     } else {
       res.status(404).json({
         success: false,
-        error: "Shipment not found"
+        error: "Shipment not found",
       });
     }
   } catch (error) {
     console.error("Error getting shipment:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Get all shipments
 app.get("/api/shipments", async (req, res) => {
   try {
     const shipments = await db.getAllShipments();
     res.json({
       success: true,
-      shipments
+      shipments,
     });
   } catch (error) {
     console.error("Error getting shipments:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Add a received item to a shipment
 app.post("/api/shipments/:id/received-items", async (req, res) => {
   try {
     const shipmentId = req.params.id;
@@ -451,16 +638,21 @@ app.post("/api/shipments/:id/received-items", async (req, res) => {
     if (!upc || !qtyReceived || !deviceId) {
       return res.status(400).json({
         success: false,
-        error: "upc, qtyReceived, and deviceId are required"
+        error: "upc, qtyReceived, and deviceId are required",
       });
     }
 
-    const result = await db.addReceivedItem(shipmentId, upc, qtyReceived, deviceId);
+    const result = await db.addReceivedItem(
+      shipmentId,
+      upc,
+      qtyReceived,
+      deviceId
+    );
 
     if (result.success) {
       res.json({
         success: true,
-        item: result.item
+        item: result.item,
       });
     } else {
       res.status(404).json(result);
@@ -469,12 +661,11 @@ app.post("/api/shipments/:id/received-items", async (req, res) => {
     console.error("Error adding received item:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Get all received items for a shipment
 app.get("/api/shipments/:id/received-items", async (req, res) => {
   try {
     const shipmentId = req.params.id;
@@ -482,18 +673,17 @@ app.get("/api/shipments/:id/received-items", async (req, res) => {
 
     res.json({
       success: true,
-      items
+      items,
     });
   } catch (error) {
     console.error("Error getting received items:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Sync received items (get items updated after timestamp)
 app.get("/api/shipments/:id/received-items/sync", async (req, res) => {
   try {
     const shipmentId = req.params.id;
@@ -504,18 +694,17 @@ app.get("/api/shipments/:id/received-items/sync", async (req, res) => {
     res.json({
       success: true,
       items,
-      serverTime: Date.now()
+      serverTime: Date.now(),
     });
   } catch (error) {
     console.error("Error syncing items:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Complete a shipment
 app.post("/api/shipments/:id/complete", async (req, res) => {
   try {
     const result = await db.completeShipment(req.params.id);
@@ -524,7 +713,7 @@ app.post("/api/shipments/:id/complete", async (req, res) => {
       const shipment = await db.getShipment(req.params.id);
       res.json({
         success: true,
-        shipment
+        shipment,
       });
     } else {
       res.status(404).json(result);
@@ -533,29 +722,27 @@ app.post("/api/shipments/:id/complete", async (req, res) => {
     console.error("Error completing shipment:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Delete a shipment
 app.delete("/api/shipments/:id", async (req, res) => {
   try {
     const result = await db.deleteShipment(req.params.id);
 
     res.json({
-      success: result.success
+      success: result.success,
     });
   } catch (error) {
     console.error("Error deleting shipment:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -565,18 +752,47 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
 app.listen(PORT, () => {
-  console.log(`✅ PDF Parser & Sync API running on http://localhost:${PORT}`);
-  console.log(`📄 Endpoints:`);
-  console.log(`   GET    /                                      - Health check`);
-  console.log(`   POST   /api/parse-pdf                        - Parse PDF file`);
-  console.log(`   POST   /api/shipments                        - Create/update shipment`);
-  console.log(`   GET    /api/shipments/:id                    - Get shipment`);
-  console.log(`   GET    /api/shipments                        - Get all shipments`);
-  console.log(`   POST   /api/shipments/:id/received-items     - Add received item`);
-  console.log(`   GET    /api/shipments/:id/received-items     - Get all received items`);
-  console.log(`   GET    /api/shipments/:id/received-items/sync - Sync items since timestamp`);
-  console.log(`   POST   /api/shipments/:id/complete           - Complete shipment`);
-  console.log(`   DELETE /api/shipments/:id                    - Delete shipment`);
+  console.log(`PDF Parser & Sync API running on http://localhost:${PORT}`);
+  console.log(` Endpoints:`);
+  console.log(
+    `   GET    /                                       - Health check`
+  );
+  console.log(
+    `   POST   /api/auth/login                        - User login (session-based)`
+  );
+  console.log(`   POST   /api/auth/logout                       - User logout`);
+  console.log(
+    `   POST   /api/auth/change-passcode              - Change passcode`
+  );
+  console.log(
+    `   POST   /api/parse-pdf                         - Parse PDF file`
+  );
+  console.log(
+    `   POST   /api/shipments                         - Create/update shipment`
+  );
+  console.log(
+    `   PUT    /api/shipments/:id                     - Upsert shipment`
+  );
+  console.log(
+    `   GET    /api/shipments/:id                     - Get shipment`
+  );
+  console.log(
+    `   GET    /api/shipments                         - Get all shipments`
+  );
+  console.log(
+    `   POST   /api/shipments/:id/received-items      - Add received item`
+  );
+  console.log(
+    `   GET    /api/shipments/:id/received-items      - Get all received items`
+  );
+  console.log(
+    `   GET    /api/shipments/:id/received-items/sync - Sync items since timestamp`
+  );
+  console.log(
+    `   POST   /api/shipments/:id/complete            - Complete shipment`
+  );
+  console.log(
+    `   DELETE /api/shipments/:id                     - Delete shipment`
+  );
 });

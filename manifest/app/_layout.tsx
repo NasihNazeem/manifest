@@ -5,6 +5,8 @@ import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { store, persistor } from "../store/store";
 import { StatusBar } from "expo-status-bar";
 import { Colors } from "../constants/theme";
+import { useAuthInit } from "../hooks/useAuthInit";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 
 function LoadingView() {
   return (
@@ -15,18 +17,34 @@ function LoadingView() {
   );
 }
 
+function AppContent() {
+  // Initialize auth state from AsyncStorage
+  useAuthInit();
+
+  // Protect routes that require authentication
+  useRequireAuth();
+
+  return (
+    <>
+      <StatusBar style="light" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="change-passcode" />
+        <Stack.Screen name="history" />
+        <Stack.Screen name="new-shipment" />
+        <Stack.Screen name="scan-items" />
+        <Stack.Screen name="received-items" />
+      </Stack>
+    </>
+  );
+}
+
 export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={<LoadingView />} persistor={persistor}>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="history" />
-          <Stack.Screen name="new-shipment" />
-          <Stack.Screen name="scan-items" />
-          <Stack.Screen name="received-items" />
-        </Stack>
+        <AppContent />
       </PersistGate>
     </Provider>
   );

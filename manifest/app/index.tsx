@@ -17,6 +17,8 @@ import {
   cancelShipment,
   deleteShipment,
 } from "../store/shipmentSlice";
+import { clearAuth } from "../store/authSlice";
+import { logout } from "../services/authService";
 import { API_CONFIG } from "../config/api";
 import {
   deleteShipmentOnServer,
@@ -41,6 +43,7 @@ export default function HomeScreen() {
     (state) => state.shipment.currentShipment
   );
   const shipments = useAppSelector((state) => state.shipment.shipments);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [activeShipments, setActiveShipments] = useState<ActiveShipment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -202,6 +205,25 @@ export default function HomeScreen() {
     );
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            dispatch(clearAuth());
+            Alert.alert("Success", "Logged out successfully");
+          },
+        },
+      ]
+    );
+  };
+
   // Fetch active shipments when join form is opened
   useEffect(() => {
     if (showJoinForm) {
@@ -215,7 +237,20 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.title}>Manifest</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Manifest</Text>
+          {isAuthenticated && (
+            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {isAuthenticated && user && (
+          <View style={styles.userInfo}>
+            <Text style={styles.userInfoText}>Logged in as: {user.name}</Text>
+          </View>
+        )}
 
         {currentShipment ? (
           <View style={styles.activeShipmentContainer}>
@@ -383,6 +418,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  logoutButton: {
+    backgroundColor: Colors.error,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 6,
+  },
+  logoutButtonText: {
+    color: Colors.textLight,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  userInfo: {
+    backgroundColor: Colors.surface,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+  },
+  userInfoText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
   fabContainer: {
     position: "absolute",
     bottom: 0,
@@ -426,8 +490,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 30,
-    textAlign: "center",
     color: Colors.secondary,
   },
   sectionTitle: {
