@@ -202,6 +202,19 @@ const shipmentSlice = createSlice({
     deleteShipment: (state, action: PayloadAction<string>) => {
       state.shipments = state.shipments.filter((s) => s.id !== action.payload);
     },
+
+    // Load completed shipments from server
+    loadShipmentsFromServer: (state, action: PayloadAction<Shipment[]>) => {
+      // Only load completed shipments, don't override current active shipment
+      const completedShipments = action.payload.filter(s => s.status === "completed");
+
+      // Merge with existing shipments, avoiding duplicates
+      const existingIds = new Set(state.shipments.map(s => s.id));
+      const newShipments = completedShipments.filter(s => !existingIds.has(s.id));
+
+      state.shipments = [...state.shipments, ...newShipments];
+      console.log(`Loaded ${newShipments.length} completed shipments from server`);
+    },
   },
 });
 
@@ -213,6 +226,7 @@ export const {
   completeShipment,
   cancelShipment,
   deleteShipment,
+  loadShipmentsFromServer,
 } = shipmentSlice.actions;
 
 /**

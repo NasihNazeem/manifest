@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { Colors } from "../constants/theme";
 import { useAuthInit } from "../hooks/useAuthInit";
 import { useRequireAuth } from "../hooks/useRequireAuth";
+import { useShipmentSync } from "../hooks/useShipmentSync";
 
 function LoadingView() {
   return (
@@ -23,6 +24,9 @@ function AppContent() {
 
   // Protect routes that require authentication
   useRequireAuth();
+
+  // Sync completed shipments from server on app start
+  useShipmentSync();
 
   return (
     <>

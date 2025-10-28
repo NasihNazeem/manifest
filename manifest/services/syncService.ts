@@ -278,6 +278,45 @@ export async function deleteShipmentOnServer(shipmentId: string): Promise<{
 }
 
 /**
+ * Fetch all shipments from server
+ */
+export async function fetchAllShipments(): Promise<{
+  success: boolean;
+  shipments: any[];
+  error?: string;
+}> {
+  try {
+    console.log('📥 Fetching all shipments from server...');
+
+    const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log(`✅ Fetched ${result.shipments?.length || 0} shipments from server`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('💥 Error fetching shipments:', error);
+    return {
+      success: false,
+      shipments: [],
+      error: error instanceof Error ? error.message : 'Network error',
+    };
+  }
+}
+
+/**
  * Sync all data - pull remote changes
  */
 export async function syncAll(shipmentId: string): Promise<{
