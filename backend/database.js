@@ -104,7 +104,65 @@ async function getAllShipments() {
   }
 }
 
-async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
+/**
+ * Batch upload received items to minimize database writes
+ * Stores all items as JSONB in shipments table (single UPDATE vs 100s of INSERTs)
+ */
+async function batchUploadReceivedItems(shipmentId, receivedItems) {
+  try {
+    const shipment = await getShipment(shipmentId);
+    if (!shipment) {
+      return { success: false, error: "Shipment not found" };
+    }
+
+    console.log(`📦 Batch uploading ${receivedItems.length} items to shipment ${shipmentId}`);
+
+    // Transform frontend format to database format
+    const transformedItems = receivedItems.map(item => ({
+      upc: item.upc,
+      qtyReceived: item.qtyReceived,
+      qtyExpected: item.qtyExpected || 0,
+      itemNumber: item.itemNumber || '',
+      legacyItemNumber: item.legacyItemNumber || null,
+      description: item.description || 'Unknown Item',
+      documentId: item.documentId || null,
+      scannedBy: item.scannedByDevice ? [item.scannedByDevice] : [],
+      scannedByUsername: item.scannedByUsername || null,
+      scannedByName: item.scannedByName || null,
+      scannedAt: item.scannedAt || Date.now(),
+      discrepancy: (item.qtyReceived || 0) - (item.qtyExpected || 0),
+    }));
+
+    // Single UPDATE query - stores all items as JSONB
+    const { data, error } = await supabase
+      .from('shipments')
+      .update({
+        received_items_data: transformedItems,
+        last_updated: Date.now()
+      })
+      .eq('id', shipmentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error batch uploading items:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log(`✅ Successfully batch uploaded ${receivedItems.length} items`);
+
+    return {
+      success: true,
+      itemCount: receivedItems.length,
+      shipment: data,
+    };
+  } catch (error) {
+    console.error('Error in batchUploadReceivedItems:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId, username = null, name = null) {
   try {
     const shipment = await getShipment(shipmentId);
     if (!shipment) {
@@ -126,6 +184,7 @@ async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
     let result;
 
     if (existing) {
+      // Item already exists - update quantity
       const newQty = existing.qty_received + qtyReceived;
       const scannedBy = existing.scanned_by || [];
 
@@ -133,13 +192,19 @@ async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
         scannedBy.push(deviceId);
       }
 
+      const updateData = {
+        qty_received: newQty,
+        scanned_by: scannedBy,
+        last_updated: Date.now(),
+      };
+
+      // Update user info if provided (keeps most recent scanner)
+      if (username) updateData.scanned_by_username = username;
+      if (name) updateData.scanned_by_name = name;
+
       const { data, error } = await supabase
         .from("received_items")
-        .update({
-          qty_received: newQty,
-          scanned_by: scannedBy,
-          last_updated: Date.now(),
-        })
+        .update(updateData)
         .eq("shipment_id", shipmentId)
         .eq("upc", upc)
         .select()
@@ -152,15 +217,21 @@ async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
 
       result = data;
     } else {
+      // New item - insert with user info
+      const insertData = {
+        shipment_id: shipmentId,
+        upc: upc,
+        qty_received: qtyReceived,
+        scanned_by: [deviceId],
+        last_updated: Date.now(),
+      };
+
+      if (username) insertData.scanned_by_username = username;
+      if (name) insertData.scanned_by_name = name;
+
       const { data, error } = await supabase
         .from("received_items")
-        .insert({
-          shipment_id: shipmentId,
-          upc: upc,
-          qty_received: qtyReceived,
-          scanned_by: [deviceId],
-          last_updated: Date.now(),
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -178,6 +249,8 @@ async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
         upc: result.upc,
         qtyReceived: result.qty_received,
         scannedBy: result.scanned_by,
+        scannedByUsername: result.scanned_by_username,
+        scannedByName: result.scanned_by_name,
         lastUpdated: result.last_updated,
       },
     };
@@ -189,6 +262,21 @@ async function addReceivedItem(shipmentId, upc, qtyReceived, deviceId) {
 
 async function getReceivedItems(shipmentId) {
   try {
+    // First, try to get from new JSONB column
+    const { data: shipment, error: shipmentError } = await supabase
+      .from("shipments")
+      .select("received_items_data")
+      .eq("id", shipmentId)
+      .single();
+
+    // If JSONB column exists and has data, use it
+    if (!shipmentError && shipment?.received_items_data && Array.isArray(shipment.received_items_data) && shipment.received_items_data.length > 0) {
+      console.log(`📦 Retrieved ${shipment.received_items_data.length} items from JSONB column`);
+      return shipment.received_items_data;
+    }
+
+    // Fallback to old received_items table
+    console.log("📦 Falling back to received_items table");
     const { data, error } = await supabase
       .from("received_items")
       .select("*")
@@ -196,15 +284,23 @@ async function getReceivedItems(shipmentId) {
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("Error getting received items:", error);
+      console.error("Error getting received items from fallback table:", error);
       return [];
     }
 
+    // Transform old format to match expected format
     return data.map((item) => ({
       upc: item.upc,
       qtyReceived: item.qty_received,
+      qtyExpected: item.qty_expected,
+      itemNumber: item.item_number,
+      legacyItemNumber: item.legacy_item_number,
+      description: item.description,
+      documentId: item.document_id,
       scannedBy: item.scanned_by,
-      lastUpdated: item.last_updated,
+      scannedByUsername: item.scanned_by_username,
+      scannedByName: item.scanned_by_name,
+      scannedAt: item.last_updated,
     }));
   } catch (error) {
     console.error("Error in getReceivedItems:", error);
@@ -487,6 +583,7 @@ module.exports = {
   getShipment,
   getAllShipments,
   addReceivedItem,
+  batchUploadReceivedItems,
   getReceivedItems,
   getReceivedItemsSince,
   completeShipment,

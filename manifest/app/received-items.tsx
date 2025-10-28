@@ -7,12 +7,13 @@ import {
   Pressable,
   Alert,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useAppSelector, useAppDispatch } from "../store/store";
 import {
   updateReceivedItemQuantity,
   selectAllItemsWithStatus,
+  mergeReceivedItemsFromServer,
 } from "../store/shipmentSlice";
 import {
   exportReceivedItems,
@@ -20,13 +21,13 @@ import {
   exportOverages,
   exportShortages,
 } from "../utils/exportUtils";
+import { fetchReceivedItemsForMerge, batchUploadReceivedItems } from "../services/syncService";
 import { ReceivedItem } from "../types/shipment";
 import Screen from "../components/Screen";
 import { Colors } from "../constants/theme";
 import BackButton from "../components/BackButton";
 
 export default function ReceivedItemsScreen() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const currentShipment = useAppSelector(
     (state) => state.shipment.currentShipment
@@ -38,6 +39,8 @@ export default function ReceivedItemsScreen() {
   } | null>(null);
   const [editQuantity, setEditQuantity] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Filter to only show items that have been received, sorted by most recent first
   const allReceivedItems =
@@ -68,6 +71,85 @@ export default function ReceivedItemsScreen() {
       </Screen>
     );
   }
+
+  const handleUploadReceivedItems = async () => {
+    if (!currentShipment) return;
+
+    const itemsToUpload = currentShipment.receivedItems || [];
+
+    if (itemsToUpload.length === 0) {
+      Alert.alert("No Items", "There are no received items to upload.");
+      return;
+    }
+
+    Alert.alert(
+      "Upload Received Items",
+      `Upload ${itemsToUpload.length} received items to the server? This is optimized for minimal database writes.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Upload",
+          onPress: async () => {
+            setIsUploading(true);
+            try {
+              console.log(`📤 Uploading ${itemsToUpload.length} items...`);
+
+              const result = await batchUploadReceivedItems(
+                currentShipment.id,
+                itemsToUpload
+              );
+
+              if (result.success) {
+                Alert.alert(
+                  "Upload Complete",
+                  `Successfully uploaded ${result.itemCount} items to the server in a single operation!`
+                );
+              } else {
+                Alert.alert(
+                  "Upload Failed",
+                  result.error || "Failed to upload items to server"
+                );
+              }
+            } catch (error: any) {
+              console.error("Error uploading items:", error);
+              Alert.alert(
+                "Upload Error",
+                error.message || "An unexpected error occurred"
+              );
+            } finally {
+              setIsUploading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSyncShipment = async () => {
+    if (!currentShipment) return;
+
+    setIsSyncing(true);
+    try {
+      console.log(`🔄 Syncing shipment ${currentShipment.id}...`);
+
+      const result = await fetchReceivedItemsForMerge(currentShipment.id);
+
+      if (result.success) {
+        dispatch(mergeReceivedItemsFromServer(result.receivedItems));
+        Alert.alert(
+          "Sync Complete",
+          `Synced ${result.receivedItems.length} items from server. Check received items for updates from other devices.`
+        );
+      } else {
+        Alert.alert("Sync Failed", result.error || "Failed to sync with server");
+      }
+    } catch (error: any) {
+      console.error("Error syncing shipment:", error);
+      Alert.alert("Sync Error", error.message || "An unexpected error occurred");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleExport = async (
     type: "all" | "discrepancies" | "overages" | "shortages"
@@ -306,6 +388,13 @@ export default function ReceivedItemsScreen() {
                 )}
                 <Text style={styles.itemDetail}>UPC: {item.upc}</Text>
 
+                {/* Display who scanned the item */}
+                {item.scannedByName && (
+                  <Text style={styles.scannedByText}>
+                    Scanned by: {item.scannedByName} ({item.scannedByUsername})
+                  </Text>
+                )}
+
                 {editingItem?.upc === item.upc &&
                 editingItem?.documentId === item.documentId ? (
                   <View style={styles.editModeContainer}>
@@ -378,13 +467,29 @@ export default function ReceivedItemsScreen() {
         </View>
       </ScrollView>
 
-      {/* Floating Action Button */}
+      {/* Floating Action Buttons */}
       <View style={styles.fabContainer}>
         <Pressable
-          style={[styles.fab, styles.continueFab]}
-          onPress={() => router.back()}
+          style={[styles.fab, styles.syncFab]}
+          onPress={handleSyncShipment}
+          disabled={isSyncing}
         >
-          <Text style={styles.fabText}>Continue Scanning</Text>
+          {isSyncing ? (
+            <ActivityIndicator color={Colors.textLight} size="small" />
+          ) : (
+            <Text style={styles.fabText}>Sync Shipment</Text>
+          )}
+        </Pressable>
+        <Pressable
+          style={[styles.fab, styles.uploadFab]}
+          onPress={handleUploadReceivedItems}
+          disabled={isUploading}
+        >
+          {isUploading ? (
+            <ActivityIndicator color={Colors.textLight} size="small" />
+          ) : (
+            <Text style={styles.fabText}>Upload Items</Text>
+          )}
         </Pressable>
       </View>
     </Screen>
@@ -520,6 +625,13 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginBottom: 4,
   },
+  scannedByText: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontStyle: "italic",
+    marginTop: 4,
+    marginBottom: 4,
+  },
   quantityRow: {
     flexDirection: "row",
     marginTop: 8,
@@ -632,6 +744,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fab: {
+    flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -641,6 +754,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+  },
+  syncFab: {
+    backgroundColor: Colors.success,
+  },
+  uploadFab: {
+    backgroundColor: Colors.primary,
   },
   continueFab: {
     backgroundColor: Colors.primary,

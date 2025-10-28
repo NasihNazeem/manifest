@@ -18,7 +18,6 @@ import {
   addUnexpectedReceivedItem,
 } from "../store/shipmentSlice";
 import { ExpectedItem } from "../types/shipment";
-import { pushReceivedItem } from "../services/syncService";
 import Screen from "../components/Screen";
 import { Colors } from "../constants/theme";
 import BackButton from "../components/BackButton";
@@ -29,6 +28,7 @@ export default function ScanItemsScreen() {
   const currentShipment = useAppSelector(
     (state) => state.shipment.currentShipment
   );
+  const user = useAppSelector((state) => state.auth.user);
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
@@ -159,18 +159,13 @@ export default function ScanItemsScreen() {
         upc: selectedItem.upc,
         documentId: selectedItem.documentId, // Include documentId for unique identification
         qtyReceived: qty,
+        username: user?.username,
+        name: user?.name,
       })
     );
 
-    if (currentShipment) {
-      pushReceivedItem(currentShipment.id, selectedItem.upc, qty).catch(
-        (error) => {
-          console.error("Failed to sync to server:", error);
-        }
-      );
-    }
-
-    Alert.alert("Success", `Added ${qty} of ${selectedItem.description}`);
+    // Items are stored locally and will be synced when user clicks "Sync Shipment" or "Complete Shipment"
+    Alert.alert("Success", `Added ${qty} of ${selectedItem.description} (Local only - not synced yet)`);
     setSearchQuery("");
     setSelectedItem(null);
     setQuantity("");
@@ -197,17 +192,14 @@ export default function ScanItemsScreen() {
         itemNumber: unexpectedItem.itemNumber,
         legacyItemNumber: unexpectedItem.legacyItemNumber,
         description: unexpectedItem.description,
+        username: user?.username,
+        name: user?.name,
       })
     );
 
-    if (currentShipment) {
-      pushReceivedItem(currentShipment.id, upc, qty).catch((error) => {
-        console.error("Failed to sync to server:", error);
-      });
-    }
-
+    // Items are stored locally and will be synced when user clicks "Sync Shipment" or "Complete Shipment"
     const itemDesc = unexpectedItem.description.trim() || "Unexpected Item";
-    Alert.alert("Success", `Added ${itemDesc} with UPC ${upc} (Qty: ${qty})`);
+    Alert.alert("Success", `Added ${itemDesc} with UPC ${upc} (Qty: ${qty}) - Local only`);
 
     setShowUnexpectedItemForm(false);
     setUnexpectedItem({

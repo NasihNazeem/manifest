@@ -45,7 +45,7 @@ const shipmentSlice = createSlice({
     ) => {
       if (!state.currentShipment) return;
 
-      const { upc, documentId, qtyReceived, deviceId } = action.payload;
+      const { upc, documentId, qtyReceived, deviceId, username, name } = action.payload;
 
       // Find expected item using BOTH upc AND documentId for unique identification
       const expectedItem = state.currentShipment.expectedItems.find(
@@ -68,6 +68,9 @@ const shipmentSlice = createSlice({
         existingItem.qtyReceived += qtyReceived;
         existingItem.discrepancy =
           existingItem.qtyReceived - existingItem.qtyExpected;
+        // Update user info (keeps most recent scanner)
+        if (username) existingItem.scannedByUsername = username;
+        if (name) existingItem.scannedByName = name;
       } else {
         // Add new received item from expected item
         const receivedItem: ReceivedItem = {
@@ -81,6 +84,8 @@ const shipmentSlice = createSlice({
           documentId: expectedItem.documentId, // Preserve document ID from expected item
           scannedByDevice: deviceId,
           scannedAt: Date.now(),
+          scannedByUsername: username,
+          scannedByName: name,
         };
         state.currentShipment.receivedItems.push(receivedItem);
       }
@@ -215,6 +220,53 @@ const shipmentSlice = createSlice({
       state.shipments = [...state.shipments, ...newShipments];
       console.log(`Loaded ${newShipments.length} completed shipments from server`);
     },
+
+    // Merge received items from server with local items
+    mergeReceivedItemsFromServer: (
+      state,
+      action: PayloadAction<ReceivedItem[]>
+    ) => {
+      if (!state.currentShipment) return;
+
+      const serverItems = action.payload;
+      console.log(`Merging ${serverItems.length} items from server with local items`);
+
+      // Merge logic: Server items take precedence, but aggregate quantities
+      serverItems.forEach((serverItem) => {
+        const localItemIndex = state.currentShipment!.receivedItems.findIndex(
+          (item) =>
+            item.upc === serverItem.upc &&
+            item.documentId === serverItem.documentId
+        );
+
+        if (localItemIndex !== -1) {
+          // Item exists locally - aggregate quantities
+          const localItem = state.currentShipment!.receivedItems[localItemIndex];
+
+          // If server has different quantity, it means another device scanned it
+          // Keep the higher quantity (assumes both devices are adding, not replacing)
+          if (serverItem.qtyReceived > localItem.qtyReceived) {
+            localItem.qtyReceived = serverItem.qtyReceived;
+            localItem.discrepancy = serverItem.qtyReceived - localItem.qtyExpected;
+          }
+
+          // Update metadata from server (more recent scan)
+          if (serverItem.scannedAt && serverItem.scannedAt > (localItem.scannedAt || 0)) {
+            localItem.scannedByUsername = serverItem.scannedByUsername;
+            localItem.scannedByName = serverItem.scannedByName;
+            localItem.scannedByDevice = serverItem.scannedByDevice;
+            localItem.scannedAt = serverItem.scannedAt;
+          }
+        } else {
+          // Item only exists on server (scanned by another device)
+          state.currentShipment!.receivedItems.push(serverItem);
+        }
+      });
+
+      console.log(
+        `Merge complete. Total received items: ${state.currentShipment!.receivedItems.length}`
+      );
+    },
   },
 });
 
@@ -227,6 +279,7 @@ export const {
   cancelShipment,
   deleteShipment,
   loadShipmentsFromServer,
+  mergeReceivedItemsFromServer,
 } = shipmentSlice.actions;
 
 /**

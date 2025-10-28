@@ -23,6 +23,7 @@ import { API_CONFIG } from "../config/api";
 import {
   deleteShipmentOnServer,
   syncShipmentToServer,
+  pushReceivedItem,
 } from "../services/syncService";
 import Screen from "../components/Screen";
 import { Colors } from "../constants/theme";
@@ -128,7 +129,7 @@ export default function HomeScreen() {
   const handleComplete = () => {
     Alert.alert(
       "Complete Shipment",
-      "Are you sure you want to complete this shipment? This action cannot be undone.",
+      "Are you sure you want to complete this shipment? This will push all local received items to the server.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -138,38 +139,87 @@ export default function HomeScreen() {
 
             console.log("Completing shipment with ID:", currentShipment.id);
 
-            // First, ensure the shipment is synced to the server with latest data
-            const syncResult = await syncShipmentToServer(currentShipment.id, {
-              id: currentShipment.id,
-              date: currentShipment.date,
-              documentIds: currentShipment.documentIds,
-              expectedItems: currentShipment.expectedItems,
-              receivedItems: currentShipment.receivedItems,
-              status: "completed",
-              createdAt: currentShipment.createdAt,
-              completedAt: Date.now(),
-            });
+            // Step 1: Batch push all received items to server
+            const receivedItems = currentShipment.receivedItems || [];
+            let pushErrors = 0;
 
-            if (!syncResult.success) {
-              console.error(
-                "Failed to sync shipment completion to server:",
-                syncResult.error
-              );
-              Alert.alert(
-                "Warning",
-                `Failed to sync completion to server: ${syncResult.error}\n\nShipment was completed locally.`
-              );
-            } else {
-              console.log("Successfully synced completed shipment to server");
+            if (receivedItems.length > 0) {
+              console.log(`📤 Pushing ${receivedItems.length} received items to server...`);
+
+              for (const item of receivedItems) {
+                const pushResult = await pushReceivedItem(
+                  currentShipment.id,
+                  item.upc,
+                  item.qtyReceived,
+                  item.scannedByUsername,
+                  item.scannedByName
+                );
+
+                if (!pushResult.success) {
+                  console.error(`Failed to push item ${item.upc}:`, pushResult.error);
+                  pushErrors++;
+                }
+              }
+
+              if (pushErrors > 0) {
+                Alert.alert(
+                  "Partial Sync Error",
+                  `Failed to push ${pushErrors} out of ${receivedItems.length} items. Do you want to continue completing the shipment?`,
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Complete Anyway",
+                      style: "destructive",
+                      onPress: () => completeShipmentFinalization(),
+                    },
+                  ]
+                );
+                return;
+              }
+
+              console.log(`✅ Successfully pushed all ${receivedItems.length} items to server`);
             }
 
-            // Update local state
-            dispatch(completeShipment());
-            router.replace("/");
+            // Step 2: Complete the shipment
+            await completeShipmentFinalization();
           },
         },
       ]
     );
+  };
+
+  const completeShipmentFinalization = async () => {
+    if (!currentShipment) return;
+
+    // Sync the shipment with completed status
+    const syncResult = await syncShipmentToServer(currentShipment.id, {
+      id: currentShipment.id,
+      date: currentShipment.date,
+      documentIds: currentShipment.documentIds,
+      expectedItems: currentShipment.expectedItems,
+      receivedItems: currentShipment.receivedItems,
+      status: "completed",
+      createdAt: currentShipment.createdAt,
+      completedAt: Date.now(),
+    });
+
+    if (!syncResult.success) {
+      console.error(
+        "Failed to sync shipment completion to server:",
+        syncResult.error
+      );
+      Alert.alert(
+        "Warning",
+        `Failed to sync completion to server: ${syncResult.error}\n\nShipment was completed locally.`
+      );
+    } else {
+      console.log("Successfully synced completed shipment to server");
+    }
+
+    // Update local state
+    dispatch(completeShipment());
+    Alert.alert("Success", "Shipment completed successfully!");
+    router.replace("/");
   };
 
   const handleCancel = () => {

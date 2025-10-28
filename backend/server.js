@@ -667,10 +667,46 @@ app.get("/api/shipments", async (req, res) => {
   }
 });
 
+// Batch upload received items (optimized for minimal writes)
+app.post("/api/shipments/:id/received-items/batch", async (req, res) => {
+  try {
+    const shipmentId = req.params.id;
+    const { receivedItems } = req.body;
+
+    if (!Array.isArray(receivedItems)) {
+      return res.status(400).json({
+        success: false,
+        error: "receivedItems must be an array",
+      });
+    }
+
+    console.log(`📦 Batch uploading ${receivedItems.length} received items for shipment ${shipmentId}`);
+
+    const result = await db.batchUploadReceivedItems(shipmentId, receivedItems);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: `Successfully uploaded ${receivedItems.length} items`,
+        itemCount: receivedItems.length,
+      });
+    } else {
+      res.status(500).json(result);
+    }
+  } catch (error) {
+    console.error("Error batch uploading received items:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Single item upload (kept for backwards compatibility, but batch is preferred)
 app.post("/api/shipments/:id/received-items", async (req, res) => {
   try {
     const shipmentId = req.params.id;
-    const { upc, qtyReceived, deviceId } = req.body;
+    const { upc, qtyReceived, deviceId, username, name } = req.body;
 
     if (!upc || !qtyReceived || !deviceId) {
       return res.status(400).json({
@@ -679,11 +715,15 @@ app.post("/api/shipments/:id/received-items", async (req, res) => {
       });
     }
 
+    console.log(`Adding received item: UPC=${upc}, Qty=${qtyReceived}, User=${username || 'N/A'} (${name || 'N/A'})`);
+
     const result = await db.addReceivedItem(
       shipmentId,
       upc,
       qtyReceived,
-      deviceId
+      deviceId,
+      username,  // Pass username
+      name       // Pass name
     );
 
     if (result.success) {
@@ -710,7 +750,7 @@ app.get("/api/shipments/:id/received-items", async (req, res) => {
 
     res.json({
       success: true,
-      items,
+      receivedItems: items,  // Changed from 'items' to 'receivedItems' for consistency
     });
   } catch (error) {
     console.error("Error getting received items:", error);

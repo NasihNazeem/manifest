@@ -4,7 +4,7 @@ export interface ExpectedItem {
   description: string;
   upc: string;
   qtyExpected: number;
-  documentId?: string; // Packing list number from the page this item was on
+  documentId?: string;
 }
 
 export interface ReceivedItem {
@@ -15,9 +15,11 @@ export interface ReceivedItem {
   qtyReceived: number;
   qtyExpected: number;
   discrepancy: number;
-  documentId?: string; // Packing list number (inherited from ExpectedItem)
-  scannedByDevice?: string; // Device ID that scanned this item
-  scannedAt?: number; // Timestamp when scanned
+  documentId?: string;
+  scannedByDevice?: string;
+  scannedAt?: number;
+  scannedByUsername?: string;
+  scannedByName?: string;
 }
 
 export interface Shipment {
@@ -38,9 +40,11 @@ export interface ShipmentState {
 
 export interface AddExpectedReceivedItemPayload {
   upc: string;
-  documentId?: string; // Required to identify which specific item when same UPC appears on multiple docs
+  documentId?: string;
   qtyReceived: number;
   deviceId?: string;
+  username?: string;
+  name?: string;
 }
 
 export interface AddUnexpectedReceivedItemPayload {
@@ -50,4 +54,6 @@ export interface AddUnexpectedReceivedItemPayload {
   legacyItemNumber?: string;
   description?: string;
   deviceId?: string;
+  username?: string;
+  name?: string;
 }
