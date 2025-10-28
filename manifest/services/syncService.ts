@@ -474,6 +474,68 @@ export async function fetchReceivedItemsForMerge(
 }
 
 /**
+ * Check if a shipment has been completed by another device
+ */
+export async function checkShipmentStatus(
+  shipmentId: string
+): Promise<{
+  success: boolean;
+  status?: 'in-progress' | 'completed';
+  completedAt?: number;
+  exists: boolean;
+  error?: string;
+}> {
+  try {
+    console.log(`🔍 Checking status for shipment ${shipmentId}...`);
+
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return {
+          success: true,
+          exists: false,
+        };
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success && result.shipment) {
+      console.log(`✅ Shipment status: ${result.shipment.status}`);
+      return {
+        success: true,
+        exists: true,
+        status: result.shipment.status,
+        completedAt: result.shipment.completedAt,
+      };
+    } else {
+      return {
+        success: false,
+        exists: false,
+        error: result.error || 'Failed to fetch shipment status',
+      };
+    }
+  } catch (error: any) {
+    console.error('❌ Error checking shipment status:', error);
+    return {
+      success: false,
+      exists: false,
+      error: error.message || 'Network error',
+    };
+  }
+}
+
+/**
  * Sync all data - pull remote changes
  */
 export async function syncAll(shipmentId: string): Promise<{

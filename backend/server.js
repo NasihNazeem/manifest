@@ -680,6 +680,22 @@ app.post("/api/shipments/:id/received-items/batch", async (req, res) => {
       });
     }
 
+    // Check if shipment is completed
+    const shipment = await db.getShipment(shipmentId);
+    if (!shipment) {
+      return res.status(404).json({
+        success: false,
+        error: "Shipment not found",
+      });
+    }
+
+    if (shipment.status === "completed") {
+      return res.status(403).json({
+        success: false,
+        error: "Cannot upload items to a completed shipment",
+      });
+    }
+
     console.log(`📦 Batch uploading ${receivedItems.length} received items for shipment ${shipmentId}`);
 
     const result = await db.batchUploadReceivedItems(shipmentId, receivedItems);
@@ -712,6 +728,22 @@ app.post("/api/shipments/:id/received-items", async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "upc, qtyReceived, and deviceId are required",
+      });
+    }
+
+    // Check if shipment is completed
+    const shipment = await db.getShipment(shipmentId);
+    if (!shipment) {
+      return res.status(404).json({
+        success: false,
+        error: "Shipment not found",
+      });
+    }
+
+    if (shipment.status === "completed") {
+      return res.status(403).json({
+        success: false,
+        error: "Cannot add items to a completed shipment",
       });
     }
 

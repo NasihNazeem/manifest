@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useAppSelector, useAppDispatch } from "../store/store";
 import {
   updateReceivedItemQuantity,
   selectAllItemsWithStatus,
   mergeReceivedItemsFromServer,
+  markItemsAsUploaded,
 } from "../store/shipmentSlice";
 import {
   exportReceivedItems,
@@ -28,6 +30,7 @@ import { Colors } from "../constants/theme";
 import BackButton from "../components/BackButton";
 
 export default function ReceivedItemsScreen() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const currentShipment = useAppSelector(
     (state) => state.shipment.currentShipment
@@ -41,6 +44,28 @@ export default function ReceivedItemsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Validate shipment status on mount and when it changes
+  useEffect(() => {
+    if (!currentShipment) {
+      return;
+    }
+
+    // Check if shipment is completed
+    if (currentShipment.status === "completed") {
+      Alert.alert(
+        "Shipment Completed",
+        "This shipment has been completed by another device. You cannot edit a completed shipment.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  }, [currentShipment?.status]);
 
   // Filter to only show items that have been received, sorted by most recent first
   const allReceivedItems =
@@ -75,6 +100,15 @@ export default function ReceivedItemsScreen() {
   const handleUploadReceivedItems = async () => {
     if (!currentShipment) return;
 
+    // Check if shipment is still in progress
+    if (currentShipment.status === "completed") {
+      Alert.alert(
+        "Shipment Completed",
+        "This shipment has been completed. You cannot upload items to a completed shipment."
+      );
+      return;
+    }
+
     const itemsToUpload = currentShipment.receivedItems || [];
 
     if (itemsToUpload.length === 0) {
@@ -100,6 +134,9 @@ export default function ReceivedItemsScreen() {
               );
 
               if (result.success) {
+                // Mark items as uploaded in Redux
+                dispatch(markItemsAsUploaded());
+
                 Alert.alert(
                   "Upload Complete",
                   `Successfully uploaded ${result.itemCount} items to the server in a single operation!`

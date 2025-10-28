@@ -23,7 +23,7 @@ import { API_CONFIG } from "../config/api";
 import {
   deleteShipmentOnServer,
   syncShipmentToServer,
-  pushReceivedItem,
+  checkShipmentStatus,
 } from "../services/syncService";
 import Screen from "../components/Screen";
 import { Colors } from "../constants/theme";
@@ -126,10 +126,48 @@ export default function HomeScreen() {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (!currentShipment) return;
+
+    // Step 1: Check if shipment was already completed by another device
+    const statusCheck = await checkShipmentStatus(currentShipment.id);
+
+    if (statusCheck.exists && statusCheck.status === "completed") {
+      Alert.alert(
+        "Shipment Already Completed",
+        "This shipment has already been completed by another device.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              dispatch(cancelShipment());
+              router.replace("/");
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
+    // Check if there are received items
+    const hasReceivedItems = currentShipment.receivedItems && currentShipment.receivedItems.length > 0;
+
+    // Check if items have been uploaded
+    if (hasReceivedItems && !currentShipment.itemsUploadedToServer) {
+      Alert.alert(
+        "Items Not Uploaded",
+        "You must upload all received items before completing the shipment. Please go to 'Received Items' and click 'Upload Items' first.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     Alert.alert(
       "Complete Shipment",
-      "Are you sure you want to complete this shipment? This will push all local received items to the server.",
+      hasReceivedItems
+        ? "Are you sure you want to complete this shipment? All items have been uploaded to the server."
+        : "Are you sure you want to complete this shipment? No items have been received.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -139,48 +177,8 @@ export default function HomeScreen() {
 
             console.log("Completing shipment with ID:", currentShipment.id);
 
-            // Step 1: Batch push all received items to server
-            const receivedItems = currentShipment.receivedItems || [];
-            let pushErrors = 0;
-
-            if (receivedItems.length > 0) {
-              console.log(`📤 Pushing ${receivedItems.length} received items to server...`);
-
-              for (const item of receivedItems) {
-                const pushResult = await pushReceivedItem(
-                  currentShipment.id,
-                  item.upc,
-                  item.qtyReceived,
-                  item.scannedByUsername,
-                  item.scannedByName
-                );
-
-                if (!pushResult.success) {
-                  console.error(`Failed to push item ${item.upc}:`, pushResult.error);
-                  pushErrors++;
-                }
-              }
-
-              if (pushErrors > 0) {
-                Alert.alert(
-                  "Partial Sync Error",
-                  `Failed to push ${pushErrors} out of ${receivedItems.length} items. Do you want to continue completing the shipment?`,
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Complete Anyway",
-                      style: "destructive",
-                      onPress: () => completeShipmentFinalization(),
-                    },
-                  ]
-                );
-                return;
-              }
-
-              console.log(`✅ Successfully pushed all ${receivedItems.length} items to server`);
-            }
-
-            // Step 2: Complete the shipment
+            // Items have already been uploaded via "Upload Items" button
+            // Now just finalize the shipment
             await completeShipmentFinalization();
           },
         },
@@ -222,7 +220,30 @@ export default function HomeScreen() {
     router.replace("/");
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (!currentShipment) return;
+
+    // Check if shipment was already completed by another device
+    const statusCheck = await checkShipmentStatus(currentShipment.id);
+
+    if (statusCheck.exists && statusCheck.status === "completed") {
+      Alert.alert(
+        "Shipment Already Completed",
+        "This shipment has already been completed by another device. You cannot cancel a completed shipment.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              dispatch(cancelShipment());
+              router.replace("/");
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
     Alert.alert(
       "Cancel Shipment",
       "Are you sure you want to cancel this shipment? All data will be lost.",
@@ -314,6 +335,20 @@ export default function HomeScreen() {
             <Text style={styles.shipmentInfo}>
               Received Items: {currentShipment.receivedItems.length}
             </Text>
+
+            {currentShipment.receivedItems.length > 0 && (
+              <View style={styles.uploadStatusContainer}>
+                {currentShipment.itemsUploadedToServer ? (
+                  <Text style={styles.uploadedText}>
+                    ✓ Items uploaded to server
+                  </Text>
+                ) : (
+                  <Text style={styles.notUploadedText}>
+                    ⚠ Items not uploaded yet - Upload before completing
+                  </Text>
+                )}
+              </View>
+            )}
 
             <Pressable
               style={[styles.button, styles.primaryButton]}
@@ -563,6 +598,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
     color: Colors.textSecondary,
+  },
+  uploadStatusContainer: {
+    backgroundColor: Colors.surfaceElevated,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  uploadedText: {
+    fontSize: 14,
+    color: Colors.success,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  notUploadedText: {
+    fontSize: 14,
+    color: Colors.warning,
+    fontWeight: "600",
+    textAlign: "center",
   },
   button: {
     paddingVertical: 15,

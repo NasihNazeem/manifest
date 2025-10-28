@@ -89,6 +89,9 @@ const shipmentSlice = createSlice({
         };
         state.currentShipment.receivedItems.push(receivedItem);
       }
+
+      // Mark items as not uploaded since we added/updated an item
+      state.currentShipment.itemsUploadedToServer = false;
     },
 
     // Add unexpected received item (item NOT in manifest with optional user-provided details)
@@ -144,6 +147,9 @@ const shipmentSlice = createSlice({
         };
         state.currentShipment.receivedItems.push(receivedItem);
       }
+
+      // Mark items as not uploaded since we added/updated an item
+      state.currentShipment.itemsUploadedToServer = false;
     },
 
     updateReceivedItemQuantity: (
@@ -267,6 +273,23 @@ const shipmentSlice = createSlice({
         `Merge complete. Total received items: ${state.currentShipment!.receivedItems.length}`
       );
     },
+
+    // Mark items as uploaded to server
+    markItemsAsUploaded: (state) => {
+      if (!state.currentShipment) return;
+
+      state.currentShipment.itemsUploadedToServer = true;
+      state.currentShipment.lastUploadedAt = Date.now();
+      console.log(`Marked items as uploaded for shipment ${state.currentShipment.id}`);
+    },
+
+    // Mark items as not uploaded (when new items are added)
+    markItemsAsNotUploaded: (state) => {
+      if (!state.currentShipment) return;
+
+      state.currentShipment.itemsUploadedToServer = false;
+      console.log(`Marked items as not uploaded for shipment ${state.currentShipment.id}`);
+    },
   },
 });
 
@@ -280,6 +303,8 @@ export const {
   deleteShipment,
   loadShipmentsFromServer,
   mergeReceivedItemsFromServer,
+  markItemsAsUploaded,
+  markItemsAsNotUploaded,
 } = shipmentSlice.actions;
 
 /**

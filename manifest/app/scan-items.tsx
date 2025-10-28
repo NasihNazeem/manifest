@@ -52,6 +52,22 @@ export default function ScanItemsScreen() {
     if (!currentShipment) {
       Alert.alert("Error", "No active shipment found");
       router.back();
+      return;
+    }
+
+    // Check if shipment is completed
+    if (currentShipment.status === "completed") {
+      Alert.alert(
+        "Shipment Completed",
+        "This shipment has been completed by another device. You cannot scan items for a completed shipment.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ],
+        { cancelable: false }
+      );
     }
   }, [currentShipment]);
 
@@ -143,6 +159,16 @@ export default function ScanItemsScreen() {
   };
 
   const handleAddReceived = async () => {
+    // Check if shipment is still in progress
+    if (currentShipment?.status === "completed") {
+      Alert.alert(
+        "Shipment Completed",
+        "This shipment has been completed. You cannot add more items.",
+        [{ text: "OK", onPress: () => router.back() }]
+      );
+      return;
+    }
+
     if (!selectedItem) {
       Alert.alert("Error", "No item selected");
       return;

@@ -31,6 +31,8 @@ export interface Shipment {
   status: "in-progress" | "completed";
   createdAt: number;
   completedAt?: number;
+  itemsUploadedToServer?: boolean; // Track if received items have been uploaded
+  lastUploadedAt?: number; // Track when items were last uploaded
 }
 
 export interface ShipmentState {
