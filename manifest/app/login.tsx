@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAppDispatch } from "../store/store";
@@ -92,6 +93,11 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.header}>
+          <Image
+            source={require("../assets/manifest-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>Manifest</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
         </View>
@@ -161,6 +167,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 50,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
   },
   title: {
     fontSize: 36,

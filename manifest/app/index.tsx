@@ -151,7 +151,8 @@ export default function HomeScreen() {
     }
 
     // Check if there are received items
-    const hasReceivedItems = currentShipment.receivedItems && currentShipment.receivedItems.length > 0;
+    const hasReceivedItems =
+      currentShipment.receivedItems && currentShipment.receivedItems.length > 0;
 
     // Check if items have been uploaded
     if (hasReceivedItems && !currentShipment.itemsUploadedToServer) {
@@ -277,22 +278,18 @@ export default function HomeScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-            dispatch(clearAuth());
-            Alert.alert("Success", "Logged out successfully");
-          },
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          dispatch(clearAuth());
+          Alert.alert("Success", "Logged out successfully");
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Fetch active shipments when join form is opened

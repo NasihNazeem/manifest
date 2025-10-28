@@ -219,12 +219,10 @@ const shipmentSlice = createSlice({
       // Only load completed shipments, don't override current active shipment
       const completedShipments = action.payload.filter(s => s.status === "completed");
 
-      // Merge with existing shipments, avoiding duplicates
-      const existingIds = new Set(state.shipments.map(s => s.id));
-      const newShipments = completedShipments.filter(s => !existingIds.has(s.id));
+      // Replace local shipments with server data (server is source of truth for completed shipments)
+      state.shipments = completedShipments;
 
-      state.shipments = [...state.shipments, ...newShipments];
-      console.log(`Loaded ${newShipments.length} completed shipments from server`);
+      console.log(`Loaded ${completedShipments.length} completed shipments from server (replaced local state)`);
     },
 
     // Merge received items from server with local items

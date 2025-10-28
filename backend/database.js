@@ -92,11 +92,14 @@ async function getAllShipments() {
       id: shipment.id,
       date: shipment.date,
       documentIds: shipment.document_ids,
-      expectedItems: shipment.expected_items,
+      expectedItems: shipment.expected_items || [],
+      receivedItems: shipment.received_items_data || [], // Include received items from JSONB column
       status: shipment.status,
       createdAt: shipment.created_at,
       completedAt: shipment.completed_at,
       lastUpdated: shipment.last_updated,
+      itemsUploadedToServer: shipment.received_items_data && shipment.received_items_data.length > 0 ? true : undefined,
+      lastUploadedAt: shipment.last_updated,
     }));
   } catch (error) {
     console.error("Error in getAllShipments:", error);
