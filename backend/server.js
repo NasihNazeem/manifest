@@ -590,6 +590,43 @@ app.post("/api/shipments", async (req, res) => {
   }
 });
 
+// PUT endpoint for upserting (create or update) a shipment
+app.put("/api/shipments/:id", async (req, res) => {
+  try {
+    const shipmentId = req.params.id;
+    const shipmentData = req.body;
+
+    if (!shipmentData) {
+      return res.status(400).json({
+        success: false,
+        error: "Shipment data is required",
+      });
+    }
+
+    console.log(`Upserting shipment: ${shipmentId}`);
+    const success = await db.saveShipment(shipmentId, shipmentData);
+
+    if (success) {
+      const shipment = await db.getShipment(shipmentId);
+      res.json({
+        success: true,
+        shipment,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: "Failed to save shipment",
+      });
+    }
+  } catch (error) {
+    console.error("Error upserting shipment:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 app.get("/api/shipments/:id", async (req, res) => {
   try {
     const shipment = await db.getShipment(req.params.id);
