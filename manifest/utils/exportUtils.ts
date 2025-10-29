@@ -84,7 +84,6 @@ export async function exportReceivedItems(
       });
       return true;
     } else {
-      console.log("Sharing is not available on this device");
       return false;
     }
   } catch (error) {
@@ -121,7 +120,6 @@ export async function exportDiscrepancies(
       });
       return true;
     } else {
-      console.log("Sharing is not available on this device");
       return false;
     }
   } catch (error) {
@@ -158,7 +156,6 @@ export async function exportOverages(
       });
       return true;
     } else {
-      console.log("Sharing is not available on this device");
       return false;
     }
   } catch (error) {
@@ -195,7 +192,6 @@ export async function exportShortages(
       });
       return true;
     } else {
-      console.log("Sharing is not available on this device");
       return false;
     }
   } catch (error) {

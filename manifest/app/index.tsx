@@ -5,7 +5,6 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  TextInput,
   Alert,
   ActivityIndicator,
 } from "react-native";
@@ -53,10 +52,6 @@ export default function HomeScreen() {
   // Fetch active shipments from server
   const fetchActiveShipments = async () => {
     setFetchingShipments(true);
-    console.log(
-      "🔍 Fetching active shipments from:",
-      `${API_CONFIG.BASE_URL}/api/shipments`
-    );
 
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments`, {
@@ -66,24 +61,19 @@ export default function HomeScreen() {
         },
       });
 
-      console.log("Response status:", response.status);
-
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log("Received shipments:", result);
 
       if (result.success && result.shipments) {
         // Filter for active (in-progress) shipments only
         const active = result.shipments.filter(
           (s: ActiveShipment) => s.status === "in-progress"
         );
-        console.log("Active shipments found:", active.length);
         setActiveShipments(active);
       } else {
-        console.log("No shipments in response");
         setActiveShipments([]);
       }
     } catch (error) {
@@ -176,8 +166,6 @@ export default function HomeScreen() {
           onPress: async () => {
             if (!currentShipment) return;
 
-            console.log("Completing shipment with ID:", currentShipment.id);
-
             // Items have already been uploaded via "Upload Items" button
             // Now just finalize the shipment
             await completeShipmentFinalization();
@@ -211,8 +199,6 @@ export default function HomeScreen() {
         "Warning",
         `Failed to sync completion to server: ${syncResult.error}\n\nShipment was completed locally.`
       );
-    } else {
-      console.log("Successfully synced completed shipment to server");
     }
 
     // Update local state

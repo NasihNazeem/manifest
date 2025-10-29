@@ -118,8 +118,6 @@ async function batchUploadReceivedItems(shipmentId, receivedItems) {
       return { success: false, error: "Shipment not found" };
     }
 
-    console.log(`📦 Batch uploading ${receivedItems.length} items to shipment ${shipmentId}`);
-
     // Transform frontend format to database format
     const transformedItems = receivedItems.map(item => ({
       upc: item.upc,
@@ -151,8 +149,6 @@ async function batchUploadReceivedItems(shipmentId, receivedItems) {
       console.error('Error batch uploading items:', error);
       return { success: false, error: error.message };
     }
-
-    console.log(`✅ Successfully batch uploaded ${receivedItems.length} items`);
 
     return {
       success: true,
@@ -274,12 +270,10 @@ async function getReceivedItems(shipmentId) {
 
     // If JSONB column exists and has data, use it
     if (!shipmentError && shipment?.received_items_data && Array.isArray(shipment.received_items_data) && shipment.received_items_data.length > 0) {
-      console.log(`📦 Retrieved ${shipment.received_items_data.length} items from JSONB column`);
       return shipment.received_items_data;
     }
 
     // Fallback to old received_items table
-    console.log("📦 Falling back to received_items table");
     const { data, error } = await supabase
       .from("received_items")
       .select("*")

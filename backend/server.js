@@ -264,12 +264,9 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
-    console.log(`Login attempt for user: ${username}`);
-
     const user = await db.getUserByUsername(username);
 
     if (!user) {
-      console.log(`User not found: ${username}`);
       return res.status(401).json({
         success: false,
         error: "Invalid username or passcode",
@@ -279,7 +276,6 @@ app.post("/api/auth/login", async (req, res) => {
     const isValid = await bcrypt.compare(passcode, user.passcodeHash);
 
     if (!isValid) {
-      console.log(`Invalid passcode for user: ${username}`);
       return res.status(401).json({
         success: false,
         error: "Invalid username or passcode",
@@ -297,8 +293,6 @@ app.post("/api/auth/login", async (req, res) => {
         error: "Failed to create session",
       });
     }
-
-    console.log(`Login successful for user: ${username}`);
 
     res.json({
       success: true,
@@ -340,8 +334,6 @@ app.post("/api/auth/logout", async (req, res) => {
         error: "Failed to logout",
       });
     }
-
-    console.log(`Logout successful`);
 
     res.json({
       success: true,
@@ -385,10 +377,6 @@ app.post("/api/auth/change-passcode", async (req, res) => {
       });
     }
 
-    console.log(
-      `Passcode change request for user: ${sessionData.user.username}`
-    );
-
     const user = await db.getUserByUsername(sessionData.user.username);
 
     if (!user) {
@@ -401,9 +389,6 @@ app.post("/api/auth/change-passcode", async (req, res) => {
     const isValid = await bcrypt.compare(currentPasscode, user.passcodeHash);
 
     if (!isValid) {
-      console.log(
-        `Invalid current passcode for user: ${sessionData.user.username}`
-      );
       return res.status(401).json({
         success: false,
         error: "Current passcode is incorrect",
@@ -420,10 +405,6 @@ app.post("/api/auth/change-passcode", async (req, res) => {
         error: "Failed to change passcode",
       });
     }
-
-    console.log(
-      `Passcode changed successfully for user: ${sessionData.user.username}`
-    );
 
     res.json({
       success: true,
@@ -462,12 +443,6 @@ app.post(
       // Parse PDF
       const data = await pdfParse(pdfBuffer);
 
-      console.log("PDF parsed:", {
-        numPages: data.numpages,
-        textLength: data.text.length,
-        firstChars: data.text.substring(0, 500),
-      });
-
       // Parse page-by-page to associate items with document IDs
       const allItems = [];
       const packingListsSet = new Set();
@@ -478,14 +453,11 @@ app.post(
       const lines = data.text.split("\n");
       let currentPageText = [];
 
-      console.log("Total lines:", lines.length);
-
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
         // Detect new page by "Packing List" header
         if (line.includes("Packing List") && currentPageText.length > 0) {
-          console.log("New page detected at line", i);
           pageTexts.push(currentPageText.join("\n"));
           currentPageText = [line];
         } else {
@@ -497,19 +469,11 @@ app.post(
         pageTexts.push(currentPageText.join("\n"));
       }
 
-      console.log("Split into pages:", pageTexts.length);
-
       // Process each page
       for (let pageIndex = 0; pageIndex < pageTexts.length; pageIndex++) {
         const pageText = pageTexts[pageIndex];
         const documentId = extractPackingListNumber(pageText);
         const pageItems = extractItems(pageText);
-
-        console.log(`Page ${pageIndex + 1}:`, {
-          documentId,
-          itemCount: pageItems.length,
-          preview: pageText.substring(0, 200),
-        });
 
         // Add documentId to each item from this page
         pageItems.forEach((item) => {
@@ -522,10 +486,6 @@ app.post(
       }
 
       const packingLists = Array.from(packingListsSet);
-      console.log("Parsing complete:", {
-        packingLists,
-        totalItems: allItems.length,
-      });
 
       res.json({
         success: true,
@@ -603,7 +563,6 @@ app.put("/api/shipments/:id", async (req, res) => {
       });
     }
 
-    console.log(`Upserting shipment: ${shipmentId}`);
     const success = await db.saveShipment(shipmentId, shipmentData);
 
     if (success) {
@@ -696,8 +655,6 @@ app.post("/api/shipments/:id/received-items/batch", async (req, res) => {
       });
     }
 
-    console.log(`📦 Batch uploading ${receivedItems.length} received items for shipment ${shipmentId}`);
-
     const result = await db.batchUploadReceivedItems(shipmentId, receivedItems);
 
     if (result.success) {
@@ -746,8 +703,6 @@ app.post("/api/shipments/:id/received-items", async (req, res) => {
         error: "Cannot add items to a completed shipment",
       });
     }
-
-    console.log(`Adding received item: UPC=${upc}, Qty=${qtyReceived}, User=${username || 'N/A'} (${name || 'N/A'})`);
 
     const result = await db.addReceivedItem(
       shipmentId,

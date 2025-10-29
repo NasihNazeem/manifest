@@ -13,8 +13,6 @@ export function useShipmentSync() {
 
   useEffect(() => {
     const syncShipments = async () => {
-      console.log('🔄 Syncing shipments from server...');
-
       const result = await fetchAllShipments();
 
       if (result.success && result.shipments) {
@@ -31,9 +29,7 @@ export function useShipmentSync() {
         }));
 
         dispatch(loadShipmentsFromServer(transformedShipments));
-        console.log('✅ Shipments synced successfully');
       } else {
-        console.log('⚠️  Failed to sync shipments:', result.error);
         // Don't show error to user - app works without sync
       }
     };

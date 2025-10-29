@@ -221,8 +221,6 @@ const shipmentSlice = createSlice({
 
       // Replace local shipments with server data (server is source of truth for completed shipments)
       state.shipments = completedShipments;
-
-      console.log(`Loaded ${completedShipments.length} completed shipments from server (replaced local state)`);
     },
 
     // Merge received items from server with local items
@@ -233,7 +231,6 @@ const shipmentSlice = createSlice({
       if (!state.currentShipment) return;
 
       const serverItems = action.payload;
-      console.log(`Merging ${serverItems.length} items from server with local items`);
 
       // Merge logic: Server items take precedence, but aggregate quantities
       serverItems.forEach((serverItem) => {
@@ -266,10 +263,6 @@ const shipmentSlice = createSlice({
           state.currentShipment!.receivedItems.push(serverItem);
         }
       });
-
-      console.log(
-        `Merge complete. Total received items: ${state.currentShipment!.receivedItems.length}`
-      );
     },
 
     // Mark items as uploaded to server
@@ -278,7 +271,6 @@ const shipmentSlice = createSlice({
 
       state.currentShipment.itemsUploadedToServer = true;
       state.currentShipment.lastUploadedAt = Date.now();
-      console.log(`Marked items as uploaded for shipment ${state.currentShipment.id}`);
     },
 
     // Mark items as not uploaded (when new items are added)
@@ -286,7 +278,6 @@ const shipmentSlice = createSlice({
       if (!state.currentShipment) return;
 
       state.currentShipment.itemsUploadedToServer = false;
-      console.log(`Marked items as not uploaded for shipment ${state.currentShipment.id}`);
     },
   },
 });

@@ -31,9 +31,6 @@ export async function login(
   passcode: string
 ): Promise<LoginResponse> {
   try {
-    console.log("🔐 Login attempt:", { username, passcodeLength: passcode.length });
-    console.log("📡 API URL:", `${API_CONFIG.BASE_URL}/api/auth/login`);
-
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: {
@@ -42,17 +39,11 @@ export async function login(
       body: JSON.stringify({ username, passcode }),
     });
 
-    console.log("📥 Response status:", response.status);
-
     const result = await response.json();
-    console.log("📦 Response data:", { success: result.success, hasToken: !!result.sessionToken, error: result.error });
 
     if (result.success && result.sessionToken) {
       await AsyncStorage.setItem(SESSION_TOKEN_KEY, result.sessionToken);
       await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(result.user));
-      console.log("✅ Login successful, session stored");
-    } else {
-      console.log("❌ Login failed:", result.error);
     }
 
     return result;

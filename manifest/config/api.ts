@@ -18,10 +18,3 @@ export const API_CONFIG = {
 export const isPdfParsingEnabled = () => {
   return API_CONFIG.PDF_PARSER_URL !== "";
 };
-
-// Log current configuration (always log to help with debugging)
-console.log("📡 API Configuration:");
-console.log(`   Base URL: ${API_CONFIG.BASE_URL}`);
-console.log(`   PDF Parser: ${API_CONFIG.PDF_PARSER_URL}`);
-console.log(`   Environment: ${__DEV__ ? "Development" : "Production"}`);
-console.log(`   Timestamp: ${new Date().toISOString()}`);

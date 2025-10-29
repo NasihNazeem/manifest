@@ -148,12 +148,9 @@ export default function NewShipmentScreen() {
     dispatch(createShipment({ id: shipmentId, documentIds, expectedItems }));
 
     // Sync to server in background (don't block user)
-    console.log("Syncing new shipment to server with ID:", shipmentId);
     syncShipmentToServer(shipmentId, shipmentData)
       .then((result) => {
-        if (result.success) {
-          console.log("✅ Successfully synced shipment to server");
-        } else {
+        if (!result.success) {
           console.error("❌ Failed to sync shipment to server:", result.error);
         }
       })

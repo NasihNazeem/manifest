@@ -126,8 +126,6 @@ export default function ReceivedItemsScreen() {
           onPress: async () => {
             setIsUploading(true);
             try {
-              console.log(`📤 Uploading ${itemsToUpload.length} items...`);
-
               const result = await batchUploadReceivedItems(
                 currentShipment.id,
                 itemsToUpload
@@ -167,8 +165,6 @@ export default function ReceivedItemsScreen() {
 
     setIsSyncing(true);
     try {
-      console.log(`🔄 Syncing shipment ${currentShipment.id}...`);
-
       const result = await fetchReceivedItemsForMerge(currentShipment.id);
 
       if (result.success) {

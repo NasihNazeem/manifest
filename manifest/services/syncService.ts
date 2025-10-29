@@ -290,8 +290,6 @@ export async function fetchAllShipments(): Promise<{
   error?: string;
 }> {
   try {
-    console.log('📥 Fetching all shipments from server...');
-
     const response = await fetch(`${API_CONFIG.BASE_URL}/api/shipments`, {
       method: 'GET',
       headers: {
@@ -304,11 +302,6 @@ export async function fetchAllShipments(): Promise<{
     }
 
     const result = await response.json();
-
-    if (result.success) {
-      console.log(`✅ Fetched ${result.shipments?.length || 0} shipments from server`);
-    }
-
     return result;
   } catch (error) {
     console.error('💥 Error fetching shipments:', error);
@@ -333,8 +326,6 @@ export async function batchUploadReceivedItems(
   error?: string;
 }> {
   try {
-    console.log(`📤 Batch uploading ${receivedItems.length} received items...`);
-
     const response = await fetch(
       `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}/received-items/batch`,
       {
@@ -355,7 +346,6 @@ export async function batchUploadReceivedItems(
     const result = await response.json();
 
     if (result.success) {
-      console.log(`✅ Successfully uploaded ${result.itemCount} items to server`);
       return {
         success: true,
         itemCount: result.itemCount,
@@ -387,8 +377,6 @@ export async function fetchReceivedItemsForMerge(
   error?: string;
 }> {
   try {
-    console.log(`🔄 Fetching received items for shipment ${shipmentId} to merge...`);
-
     const response = await fetch(
       `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}/received-items`,
       {
@@ -406,7 +394,6 @@ export async function fetchReceivedItemsForMerge(
     const result = await response.json();
 
     if (result.success) {
-      console.log(`✅ Fetched ${result.receivedItems?.length || 0} received items from server`);
 
       // Data from JSONB is already in correct format (camelCase)
       // But we need to handle both old table format (snake_case) and new JSONB format
@@ -486,8 +473,6 @@ export async function checkShipmentStatus(
   error?: string;
 }> {
   try {
-    console.log(`🔍 Checking status for shipment ${shipmentId}...`);
-
     const response = await fetch(
       `${API_CONFIG.BASE_URL}/api/shipments/${shipmentId}`,
       {
@@ -511,7 +496,6 @@ export async function checkShipmentStatus(
     const result = await response.json();
 
     if (result.success && result.shipment) {
-      console.log(`✅ Shipment status: ${result.shipment.status}`);
       return {
         success: true,
         exists: true,

@@ -64,7 +64,6 @@ export async function parsePdfFile(uri: string): Promise<{
     }
 
     const result = await response.json();
-    console.log('📦 Parse PDF Result:', JSON.stringify(result, null, 2));
 
     if (!result.success) {
       throw new Error(result.message || "Failed to parse PDF");
@@ -79,9 +78,6 @@ export async function parsePdfFile(uri: string): Promise<{
       qtyExpected: item.qtyShipped, // Backend uses qtyShipped, frontend expects qtyExpected
       documentId: item.documentId, // Include document ID from page-by-page parsing
     }));
-
-    console.log('✅ Parsed Items:', expectedItems.length);
-    console.log('📄 Document IDs:', result.data.packingLists);
 
     return {
       documentIds: result.data.packingLists || [],

@@ -96,12 +96,9 @@ export default function HistoryScreen() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      console.log("🔄 Refreshing completed shipments from server...");
       const result = await fetchAllShipments();
 
       if (result.success && result.shipments) {
-        console.log("📦 Raw shipments from server:", JSON.stringify(result.shipments, null, 2));
-
         // Ensure each shipment has the required arrays
         const completedShipments = result.shipments
           .filter((s) => s.status === "completed")
@@ -111,7 +108,6 @@ export default function HistoryScreen() {
             receivedItems: s.receivedItems || [],
           }));
 
-        console.log("📦 Processed completed shipments:", completedShipments.length);
         dispatch(loadShipmentsFromServer(completedShipments));
         Alert.alert(
           "Success",
