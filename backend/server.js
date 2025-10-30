@@ -94,22 +94,58 @@ function parseItemLine(line) {
   // Extract UPC and quantity
   const allMatches = [];
 
-  for (let i = 0; i <= remaining.length - 13; i++) {
-    const candidate = remaining.substring(i, i + 13);
+  // First, check if this is a Tweezerman product (description starts with TM)
+  let isTweezerman = false;
 
-    if (/^\d{13}$/.test(candidate)) {
+  // Check for 12-digit UPC (UPC-A format, like 038097103403) - for Tweezerman products
+  for (let i = 0; i <= remaining.length - 12; i++) {
+    const candidate12 = remaining.substring(i, i + 12);
+
+    if (/^\d{12}$/.test(candidate12)) {
+      const beforeCandidate = remaining.substring(0, i).trim();
+
+      // Check if description starts with TM (Tweezerman)
+      if (beforeCandidate.startsWith("TM") || beforeCandidate.includes(" TM ")) {
+        isTweezerman = true;
+      }
+
+      // UPC-A validation: must start with 0 for North American products
+      // This prevents matching random 12-digit sequences
+      if (candidate12.startsWith("0")) {
+        const afterCandidate = remaining.substring(i + 12);
+        if (/^\d{0,4}$/.test(afterCandidate)) {
+          allMatches.push({
+            upc: candidate12,
+            index: i,
+            qtyAfter: afterCandidate,
+            length: 12,
+          });
+        }
+      }
+    }
+  }
+
+  // Check for 13-digit UPC (EAN-13 format)
+  for (let i = 0; i <= remaining.length - 13; i++) {
+    const candidate13 = remaining.substring(i, i + 13);
+
+    if (/^\d{13}$/.test(candidate13)) {
       const startsValid =
-        candidate.startsWith("4") ||
-        candidate.startsWith("3") ||
-        candidate.startsWith("038");
+        candidate13.startsWith("4") ||
+        candidate13.startsWith("3") ||
+        candidate13.startsWith("5") ||
+        candidate13.startsWith("6") ||
+        candidate13.startsWith("8") ||
+        candidate13.startsWith("9");
 
       if (startsValid) {
         const afterCandidate = remaining.substring(i + 13);
         if (/^\d{0,4}$/.test(afterCandidate)) {
           allMatches.push({
-            upc: candidate,
+            upc: candidate13,
             index: i,
             qtyAfter: afterCandidate,
+            length: 13,
           });
         }
       }
@@ -118,11 +154,27 @@ function parseItemLine(line) {
 
   if (allMatches.length === 0) return null;
 
-  const lastMatch = allMatches[allMatches.length - 1];
-  const upc = lastMatch.upc;
-  const qty = lastMatch.qtyAfter || "0";
+  // If Tweezerman product, prefer 12-digit UPC-A
+  let selectedMatch;
+  if (isTweezerman) {
+    const upcAMatches = allMatches.filter((m) => m.length === 12);
+    selectedMatch =
+      upcAMatches.length > 0
+        ? upcAMatches[upcAMatches.length - 1]
+        : allMatches[allMatches.length - 1];
+  } else {
+    // For non-Tweezerman, prefer 13-digit EAN-13
+    const ean13Matches = allMatches.filter((m) => m.length === 13);
+    selectedMatch =
+      ean13Matches.length > 0
+        ? ean13Matches[ean13Matches.length - 1]
+        : allMatches[allMatches.length - 1];
+  }
 
-  const description = remaining.substring(0, lastMatch.index).trim();
+  const upc = selectedMatch.upc;
+  const qty = selectedMatch.qtyAfter || "0";
+
+  const description = remaining.substring(0, selectedMatch.index).trim();
 
   const result = {
     itemNumber: itemNumber,
