@@ -130,13 +130,26 @@ function parseItemLine(line) {
     const candidate13 = remaining.substring(i, i + 13);
 
     if (/^\d{13}$/.test(candidate13)) {
+      // More strict validation for common GS1 prefixes
       const startsValid =
-        candidate13.startsWith("4") ||
-        candidate13.startsWith("3") ||
-        candidate13.startsWith("5") ||
-        candidate13.startsWith("6") ||
-        candidate13.startsWith("8") ||
-        candidate13.startsWith("9");
+        candidate13.startsWith("40") ||  // Germany
+        candidate13.startsWith("45") ||  // Japan
+        candidate13.startsWith("49") ||  // Japan
+        candidate13.startsWith("30") ||  // France
+        candidate13.startsWith("31") ||  // France
+        candidate13.startsWith("32") ||  // France
+        candidate13.startsWith("33") ||  // France
+        candidate13.startsWith("34") ||  // France
+        candidate13.startsWith("35") ||  // France
+        candidate13.startsWith("36") ||  // France
+        candidate13.startsWith("37") ||  // France
+        candidate13.startsWith("50") ||  // UK
+        candidate13.startsWith("54") ||  // Belgium/Luxembourg
+        candidate13.startsWith("69") ||  // China
+        candidate13.startsWith("80") ||  // Italy
+        candidate13.startsWith("84") ||  // Spain
+        candidate13.startsWith("90") ||  // Austria
+        candidate13.startsWith("93");    // Australia
 
       if (startsValid) {
         const afterCandidate = remaining.substring(i + 13);
@@ -154,21 +167,48 @@ function parseItemLine(line) {
 
   if (allMatches.length === 0) return null;
 
+  // Filter out obvious false matches by checking if the match creates a valid description
+  const validMatches = allMatches.filter((m) => {
+    const beforeCandidate = remaining.substring(0, m.index).trim();
+
+    // If description is empty or very short, it's likely a false match
+    if (beforeCandidate.length < 3) return false;
+
+    // Check if the last character before UPC is part of a longer digit sequence
+    // This filters out shifted matches like "9324752070253" from "6932475207025"
+    if (m.index > 0) {
+      const charBefore = remaining.charAt(m.index - 1);
+      if (/\d/.test(charBefore)) {
+        // Check if this digit is part of the UPC itself (shifted match)
+        // by seeing if removing this digit would give us another valid UPC pattern
+        const possibleUPC = charBefore + m.upc;
+        // If the char before + UPC forms a 13 or 14 digit sequence, this is likely a shifted match
+        if (/^\d{13,14}$/.test(possibleUPC)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
+
+  const matchesToUse = validMatches.length > 0 ? validMatches : allMatches;
+
   // If Tweezerman product, prefer 12-digit UPC-A
   let selectedMatch;
   if (isTweezerman) {
-    const upcAMatches = allMatches.filter((m) => m.length === 12);
+    const upcAMatches = matchesToUse.filter((m) => m.length === 12);
     selectedMatch =
       upcAMatches.length > 0
         ? upcAMatches[upcAMatches.length - 1]
-        : allMatches[allMatches.length - 1];
+        : matchesToUse[matchesToUse.length - 1];
   } else {
     // For non-Tweezerman, prefer 13-digit EAN-13
-    const ean13Matches = allMatches.filter((m) => m.length === 13);
+    const ean13Matches = matchesToUse.filter((m) => m.length === 13);
     selectedMatch =
       ean13Matches.length > 0
         ? ean13Matches[ean13Matches.length - 1]
-        : allMatches[allMatches.length - 1];
+        : matchesToUse[matchesToUse.length - 1];
   }
 
   const upc = selectedMatch.upc;
