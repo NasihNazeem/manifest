@@ -65,6 +65,7 @@ async function getShipment(shipmentId) {
       date: data.date,
       documentIds: data.document_ids,
       expectedItems: data.expected_items,
+      receivedItems: data.received_items_data || [],
       status: data.status,
       createdAt: data.created_at,
       completedAt: data.completed_at,
@@ -110,6 +111,10 @@ async function getAllShipments() {
 /**
  * Batch upload received items to minimize database writes
  * Stores all items as JSONB in shipments table (single UPDATE vs 100s of INSERTs)
+ * Merges with existing data from other devices:
+ * - qtyExpected stays the same (from PDF)
+ * - qtyReceived aggregates across devices
+ * - scannedBy tracks all devices
  */
 async function batchUploadReceivedItems(shipmentId, receivedItems) {
   try {
@@ -118,27 +123,94 @@ async function batchUploadReceivedItems(shipmentId, receivedItems) {
       return { success: false, error: "Shipment not found" };
     }
 
-    // Transform frontend format to database format
-    const transformedItems = receivedItems.map(item => ({
-      upc: item.upc,
-      qtyReceived: item.qtyReceived,
-      qtyExpected: item.qtyExpected || 0,
-      itemNumber: item.itemNumber || '',
-      legacyItemNumber: item.legacyItemNumber || null,
-      description: item.description || 'Unknown Item',
-      documentId: item.documentId || null,
-      scannedBy: item.scannedByDevice ? [item.scannedByDevice] : [],
-      scannedByUsername: item.scannedByUsername || null,
-      scannedByName: item.scannedByName || null,
-      scannedAt: item.scannedAt || Date.now(),
-      discrepancy: (item.qtyReceived || 0) - (item.qtyExpected || 0),
-    }));
+    // Get existing received items data from server
+    const existingItems = shipment.receivedItems || [];
+
+    // Create a map of existing items by UPC for easy lookup
+    const existingItemsMap = new Map();
+    existingItems.forEach(item => {
+      existingItemsMap.set(item.upc, item);
+    });
+
+    // Merge incoming items with existing items
+    const incomingItemsMap = new Map();
+    receivedItems.forEach(item => {
+      const existing = existingItemsMap.get(item.upc);
+
+      if (existing) {
+        // Item exists from another device - merge data
+        const existingDevices = Array.isArray(existing.scannedBy) ? existing.scannedBy : [];
+        const newDevice = item.scannedByDevice;
+        const updatedDevices = newDevice && !existingDevices.includes(newDevice)
+          ? [...existingDevices, newDevice]
+          : existingDevices;
+
+        // Merge usernames array
+        const existingUsernames = Array.isArray(existing.scannedByUsername)
+          ? existing.scannedByUsername
+          : existing.scannedByUsername ? [existing.scannedByUsername] : [];
+        const newUsername = item.scannedByUsername;
+        const updatedUsernames = newUsername && !existingUsernames.includes(newUsername)
+          ? [...existingUsernames, newUsername]
+          : existingUsernames;
+
+        // Merge names array
+        const existingNames = Array.isArray(existing.scannedByName)
+          ? existing.scannedByName
+          : existing.scannedByName ? [existing.scannedByName] : [];
+        const newName = item.scannedByName;
+        const updatedNames = newName && !existingNames.includes(newName)
+          ? [...existingNames, newName]
+          : existingNames;
+
+        incomingItemsMap.set(item.upc, {
+          upc: item.upc,
+          qtyReceived: (existing.qtyReceived || 0) + (item.qtyReceived || 0), // Aggregate received qty
+          qtyExpected: item.qtyExpected || existing.qtyExpected || 0, // Keep expected from PDF
+          itemNumber: item.itemNumber || existing.itemNumber || '',
+          legacyItemNumber: item.legacyItemNumber || existing.legacyItemNumber || null,
+          description: item.description || existing.description || 'Unknown Item',
+          documentId: item.documentId || existing.documentId || null,
+          scannedBy: updatedDevices,
+          scannedByUsername: updatedUsernames,
+          scannedByName: updatedNames,
+          scannedAt: item.scannedAt || existing.scannedAt || Date.now(),
+          discrepancy: ((existing.qtyReceived || 0) + (item.qtyReceived || 0)) - (item.qtyExpected || existing.qtyExpected || 0),
+        });
+      } else {
+        // New item - add as is (with arrays for user tracking)
+        incomingItemsMap.set(item.upc, {
+          upc: item.upc,
+          qtyReceived: item.qtyReceived || 0,
+          qtyExpected: item.qtyExpected || 0,
+          itemNumber: item.itemNumber || '',
+          legacyItemNumber: item.legacyItemNumber || null,
+          description: item.description || 'Unknown Item',
+          documentId: item.documentId || null,
+          scannedBy: item.scannedByDevice ? [item.scannedByDevice] : [],
+          scannedByUsername: item.scannedByUsername ? [item.scannedByUsername] : [],
+          scannedByName: item.scannedByName ? [item.scannedByName] : [],
+          scannedAt: item.scannedAt || Date.now(),
+          discrepancy: (item.qtyReceived || 0) - (item.qtyExpected || 0),
+        });
+      }
+    });
+
+    // Keep existing items that weren't in the incoming batch (from other devices)
+    existingItems.forEach(item => {
+      if (!incomingItemsMap.has(item.upc)) {
+        incomingItemsMap.set(item.upc, item);
+      }
+    });
+
+    // Convert map to array for storage
+    const mergedItems = Array.from(incomingItemsMap.values());
 
     // Single UPDATE query - stores all items as JSONB
     const { data, error } = await supabase
       .from('shipments')
       .update({
-        received_items_data: transformedItems,
+        received_items_data: mergedItems,
         last_updated: Date.now()
       })
       .eq('id', shipmentId)
@@ -152,7 +224,7 @@ async function batchUploadReceivedItems(shipmentId, receivedItems) {
 
     return {
       success: true,
-      itemCount: receivedItems.length,
+      itemCount: mergedItems.length,
       shipment: data,
     };
   } catch (error) {
