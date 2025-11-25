@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+import { router } from "expo-router";
 import { useAppSelector, useAppDispatch } from "../store/store";
 import {
   deleteShipment,
@@ -199,6 +200,19 @@ export default function HistoryScreen() {
 
             <View style={styles.actionsContainer}>
               <Pressable
+                style={[styles.actionButton, styles.primaryButton]}
+                onPress={() => router.push({
+                  pathname: '/aggregated-view',
+                  params: {
+                    shipmentId: shipment.id,
+                    shipmentDate: shipment.date,
+                  },
+                })}
+              >
+                <Text style={styles.actionButtonText}>View Aggregated</Text>
+              </Pressable>
+
+              <Pressable
                 style={[styles.actionButton, styles.exportButton]}
                 onPress={() => handleExport(shipment.id, "all")}
               >
@@ -367,6 +381,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 100,
     alignItems: "center",
+  },
+  primaryButton: {
+    backgroundColor: "#007AFF",
   },
   exportButton: {
     backgroundColor: Colors.primary,

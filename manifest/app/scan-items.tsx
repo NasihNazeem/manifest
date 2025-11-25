@@ -304,6 +304,21 @@ export default function ScanItemsScreen() {
           </View>
         </Pressable>
 
+        <Pressable
+          style={styles.aggregatedViewButton}
+          onPress={() => router.push({
+            pathname: '/aggregated-view',
+            params: {
+              shipmentId: currentShipment.id,
+              shipmentDate: currentShipment.date,
+            },
+          })}
+        >
+          <Text style={styles.aggregatedViewButtonText}>
+            View Aggregated Results from All Devices
+          </Text>
+        </Pressable>
+
         <View style={styles.scanSection}>
           <Pressable
             style={styles.scanButton}
@@ -675,6 +690,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textMuted,
     fontStyle: "italic",
+  },
+  aggregatedViewButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  aggregatedViewButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   scanSection: {
     marginBottom: 20,

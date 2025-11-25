@@ -514,14 +514,20 @@ export default function ReceivedItemsScreen() {
           )}
         </Pressable>
         <Pressable
-          style={[styles.fab, styles.uploadFab]}
+          style={[
+            styles.fab,
+            styles.uploadFab,
+            (isUploading || currentShipment?.itemsUploadedToServer) && styles.fabDisabled
+          ]}
           onPress={handleUploadReceivedItems}
-          disabled={isUploading}
+          disabled={isUploading || currentShipment?.itemsUploadedToServer}
         >
           {isUploading ? (
             <ActivityIndicator color={Colors.textLight} size="small" />
           ) : (
-            <Text style={styles.fabText}>Upload Items</Text>
+            <Text style={styles.fabText}>
+              {currentShipment?.itemsUploadedToServer ? "All Items Uploaded" : "Upload Items"}
+            </Text>
           )}
         </Pressable>
       </View>
@@ -796,6 +802,10 @@ const styles = StyleSheet.create({
   },
   continueFab: {
     backgroundColor: Colors.primary,
+  },
+  fabDisabled: {
+    backgroundColor: Colors.textMuted,
+    opacity: 0.6,
   },
   fabText: {
     color: Colors.textLight,
