@@ -64,9 +64,8 @@ export async function exportReceivedItems(
   filename: string = "received_items.csv"
 ): Promise<boolean> {
   try {
-    // Combine items with duplicate item numbers across different document IDs
-    const combinedItems = combineItemsByItemNumber(items);
-    const csvContent = itemsToCSV(combinedItems);
+    // Export all line items individually without combining
+    const csvContent = itemsToCSV(items);
     const fileUri = FileSystem.documentDirectory + filename;
 
     await FileSystem.writeAsStringAsync(fileUri, csvContent, {
@@ -94,15 +93,14 @@ export async function exportReceivedItems(
 
 /**
  * Export only items with discrepancies
- * Combines items by item number first, then filters for discrepancies
+ * Exports all line items individually without combining
  */
 export async function exportDiscrepancies(
   items: ReceivedItem[],
   filename: string = "discrepancies.csv"
 ): Promise<boolean> {
-  // Combine first, then filter - this ensures combined items are checked for discrepancies
-  const combinedItems = combineItemsByItemNumber(items);
-  const itemsWithDiscrepancies = combinedItems.filter((item) => item.discrepancy !== 0);
+  // Filter for discrepancies without combining
+  const itemsWithDiscrepancies = items.filter((item) => item.discrepancy !== 0);
 
   try {
     const csvContent = itemsToCSV(itemsWithDiscrepancies);
@@ -130,15 +128,14 @@ export async function exportDiscrepancies(
 
 /**
  * Export items with overages only
- * Combines items by item number first, then filters for overages
+ * Exports all line items individually without combining
  */
 export async function exportOverages(
   items: ReceivedItem[],
   filename: string = "overages.csv"
 ): Promise<boolean> {
-  // Combine first, then filter - this ensures combined items are checked for overages
-  const combinedItems = combineItemsByItemNumber(items);
-  const overages = combinedItems.filter((item) => item.discrepancy > 0);
+  // Filter for overages without combining
+  const overages = items.filter((item) => item.discrepancy > 0);
 
   try {
     const csvContent = itemsToCSV(overages);
@@ -166,15 +163,14 @@ export async function exportOverages(
 
 /**
  * Export items with shortages only
- * Combines items by item number first, then filters for shortages
+ * Exports all line items individually without combining
  */
 export async function exportShortages(
   items: ReceivedItem[],
   filename: string = "shortages.csv"
 ): Promise<boolean> {
-  // Combine first, then filter - this ensures combined items are checked for shortages
-  const combinedItems = combineItemsByItemNumber(items);
-  const shortages = combinedItems.filter((item) => item.discrepancy < 0);
+  // Filter for shortages without combining
+  const shortages = items.filter((item) => item.discrepancy < 0);
 
   try {
     const csvContent = itemsToCSV(shortages);
